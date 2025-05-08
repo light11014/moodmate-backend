@@ -30,7 +30,8 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         String token = jwtUtil.createToken(member.getId(), member.getRole());
 
         // 닉네임이 아직 없는 경우 → nicknameRequired = true
-        boolean nicknameRequired = (member.getUsername() == null || member.getUsername().isBlank());
+        boolean usernameRequired = (member.getUsername() == null || member.getUsername().isBlank());
+        String username = member.getUsername();
 
         // JSON 응답 작성
         response.setContentType("application/json");
@@ -39,9 +40,10 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         String json = """
         {
             "token": "%s",
-            "nicknameRequired": %s
+            "usernameRequired": %s
+            "username": %s
         }
-        """.formatted(token, nicknameRequired);
+        """.formatted(token, usernameRequired, username);
 
         response.getWriter().write(json);
     }

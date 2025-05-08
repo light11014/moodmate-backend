@@ -1,6 +1,7 @@
 package com.moodmate.oauth;
 
 import com.moodmate.entity.Member;
+import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -11,6 +12,7 @@ import java.util.Map;
 
 public class CustomOauth2User implements UserDetails, OAuth2User {
 
+    @Getter
     private final Member member;
     private Map<String, Object> attributes;
 
@@ -53,7 +55,4 @@ public class CustomOauth2User implements UserDetails, OAuth2User {
         return member.getLoginId();
     }
 
-    public Member getMember() {
-        return member;
-    }
 }
