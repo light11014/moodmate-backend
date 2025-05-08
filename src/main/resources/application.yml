@@ -1,4 +1,15 @@
 spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 899741832214-1hmu97ddimt008ojq5rbjnipqvejijue.apps.googleusercontent.com
+            client-secret: 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
+            scope:
+              - email
+              - profile
+
   datasource:
     # MySQL
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -8,7 +19,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
     properties:
