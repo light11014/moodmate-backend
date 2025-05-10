@@ -40,6 +40,8 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
 
         String providerId = oAuth2UserInfo.getProviderId();
         String loginId = provider + "_" + providerId;
+        String email = oAuth2UserInfo.getEmail();
+        String picture = oAuth2UserInfo.getPicture();
 
         Optional<Member> findMember = memberRepository.findByLoginId(loginId);
         Member member;
@@ -53,6 +55,8 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
                     .provider(provider)
                     .providerId(providerId)
                     .role(Role.USER)
+                    .pictureUrl(picture)
+                    .email(email)
                     .username(null) // 닉네임 미정
                     .build());
         }
