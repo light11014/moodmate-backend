@@ -55,4 +55,12 @@ public class CustomOauth2User implements UserDetails, OAuth2User {
         return member.getLoginId();
     }
 
+    public String getEmail() {
+        return member.getEmail();
+    }
+
+    public String getNickname() {
+        return member.getUsername();
+    }
+
 }

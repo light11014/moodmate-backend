@@ -32,9 +32,15 @@ public class Member {
     @Column(name = "provider_id", nullable = false)
     private String providerId;
 
+    //@Column(nullable = false)
     @Column(nullable = false)
     private String email;
 
     @Column(nullable = false)
     private String pictureUrl;
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
 }

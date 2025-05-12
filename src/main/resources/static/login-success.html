@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>로그인 성공</title>
+  <script>
+    // JWT 추출
+    window.onload = function () {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        alert("로그인이 필요합니다.");
+        window.location.href = "/";
+        return;
+      }
+
+      // 버튼 동작 정의
+      document.getElementById("profile-btn").onclick = () => window.location.href = "profile.html";
+      document.getElementById("nickname-btn").onclick = () => window.location.href = "nickname.html";
+      document.getElementById("delete-btn").onclick = () => {
+        const confirmation = confirm("정말로 회원탈퇴 하시겠습니까?");
+        if (confirmation) {
+          deleteAccount(token);  // 회원 탈퇴 함수 호출
+        }
+      };
+    };
+
+    function getTokenFromHeader() {
+      // Authorization 헤더에서 JWT를 가져오는 방식은 프론트 구현 방식에 따라 달라질 수 있음
+      return localStorage.getItem("token");
+    }
+
+    function deleteAccount(token) {
+      fetch("/api/users/me", {
+        method: "DELETE",
+        headers: {
+          "Authorization": "Bearer " + token,
+        },
+      })
+        .then(res => {
+          if (!res.ok) throw new Error("회원 탈퇴에 실패했습니다.");
+          alert("회원 탈퇴가 완료되었습니다.");
+          localStorage.removeItem("token");  // 토큰 삭제
+          window.location.href = "index.html";  // 메인 페이지로 이동
+        })
+        .catch(err => {
+          alert("회원 탈퇴에 실패했습니다.");
+          console.error(err);
+        });
+    }
+  </script>
+</head>
+<body>
+<h1>로그인 성공 🎉</h1>
+<button id="profile-btn">내 정보 확인</button>
+<button id="nickname-btn">닉네임 변경</button>
+<button id="delete-btn">회원 탈퇴</button>
+</body>
+</html>

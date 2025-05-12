@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>내 정보</title>
+  <script>
+    console.log("[DEBUG] 저장된 토큰:", localStorage.getItem("token"));
+
+    window.onload = function () {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("로그인이 필요합니다.");
+        location.href = "/";
+        return;
+      }
+
+      console.log("[DEBUG] 보낼 Authorization 헤더:", "Bearer " + token);
+
+      fetch("/api/users/me", {
+        headers: {
+          "Authorization": "Bearer " + token
+        }
+      })
+        .then(res => {
+          if (!res.ok) throw new Error("유효하지 않은 토큰");
+          return res.json();
+        })
+        .then(data => {
+          console.log(data);  // 응답 데이터 확인
+          document.getElementById("nickname").textContent = data.username || "없음";
+          document.getElementById("email").textContent = data.email;
+          document.getElementById("picture").src = data.pictureUrl;
+        })
+        .catch(err => {
+          alert("사용자 정보를 불러올 수 없습니다.");
+          console.error(err);
+        });
+
+      document.getElementById("back-btn").onclick = () => history.back();
+    };
+  </script>
+</head>
+<body>
+<h1>내 정보</h1>
+<p>닉네임: <span id="nickname"></span></p>
+<p>이메일: <span id="email"></span></p>
+<img id="picture" src="" alt="프로필 사진" width="100"/>
+<br/><br/>
+<button id="back-btn">뒤로가기</button>
+</body>
+</html>

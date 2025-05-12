@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>닉네임 수정</title>
+  <script>
+    window.onload = function () {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        alert("로그인이 필요합니다.");
+        window.location.href = "/";
+        return;
+      }
+
+      // 저장 버튼 클릭 시 닉네임 수정 요청
+      document.getElementById("save-btn").onclick = function () {
+        const newNickname = document.getElementById("nickname-input").value;
+        if (!newNickname) {
+          alert("닉네임을 입력해주세요.");
+          return;
+        }
+
+        fetch("/api/users/me", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
+          body: JSON.stringify({ nickname: newNickname })
+        })
+          .then(res => {
+            if (!res.ok) throw new Error("닉네임 수정 실패");
+            return res.json();
+          })
+          .then(data => {
+            alert("닉네임이 수정되었습니다.");
+            window.location.href = "login-success.html";  // 수정 후 login-success.html로 이동
+          })
+          .catch(err => {
+            alert("닉네임 수정에 실패했습니다.");
+            console.error(err);
+          });
+      };
+    };
+  </script>
+</head>
+<body>
+<h1>닉네임 수정</h1>
+<input type="text" id="nickname-input" placeholder="새로운 닉네임을 입력하세요">
+<button id="save-btn">저장</button>
+<br/><br/>
+<button onclick="history.back()">뒤로가기</button>
+</body>
+</html>
