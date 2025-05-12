@@ -24,7 +24,7 @@ public class JwtUtil {
     private final long ACCESS_TOKEN_EXPIRATION_TIME = 1000 * 60 * 15; // 15분
     private final long REFRESH_TOKEN_EXPIRATION_TIME = 1000 * 60 * 60 * 24 * 7; // 7일
 
-    // 🔐 토큰 생성
+    // 토큰 생성
     public String createToken(Long userId, String email, Role role) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + EXPIRATION_TIME);
@@ -39,7 +39,7 @@ public class JwtUtil {
                 .compact();
     }
 
-    // 🔍 토큰 유효성 검증
+    // 토큰 유효성 검증
     public boolean validateToken(String token) {
         try {
             System.out.println("[DEBUG] Token to Verify: " + token);
@@ -60,17 +60,17 @@ public class JwtUtil {
     }
 
 
-    // 🧾 사용자 ID 추출
+    // 사용자 ID 추출
     public Long getUserId(String token) {
         return Long.parseLong(getClaims(token).getSubject());
     }
 
-    // ✉️ 이메일 추출
+    // 이메일 추출
     public String extractEmail(String token) {
         return getClaims(token).get("email", String.class);
     }
 
-    // 📄 Claims 추출
+    // Claims 추출
     private Claims getClaims(String token) {
         System.out.println("[DEBUG] token received: " + token);
         return Jwts.parser()
@@ -79,13 +79,13 @@ public class JwtUtil {
                 .getBody();
     }
 
-    // 🧾 사용자 ID 추출
+    // 사용자 ID 추출
     public Long getUserIdFromToken(String token) {
         Claims claims = getClaims(token);
         return Long.parseLong(claims.getSubject());  // 토큰에서 사용자 ID를 반환
     }
 
-    // 📄 사용자 역할 추출
+    // 사용자 역할 추출
     public String getUserRoleFromToken(String token) {
         Claims claims = getClaims(token);
         return claims.get("role", String.class);  // 토큰에서 사용자 역할 반환

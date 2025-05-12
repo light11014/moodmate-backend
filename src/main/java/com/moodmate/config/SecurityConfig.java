@@ -30,6 +30,9 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 );
 
+        // JwtAuthenticationFilter 등록
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         // 소셜 로그인 설정 (경로 커스터마이징)
         http
                 .oauth2Login(oauth2 -> oauth2
@@ -45,8 +48,7 @@ public class SecurityConfig {
         http
                 .csrf((auth) -> auth.disable());
 
-        // ✅ JwtAuthenticationFilter 등록
-        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
 
         return http.build();
     }
