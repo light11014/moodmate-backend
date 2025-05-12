@@ -9,12 +9,14 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    private final com.moodmate.config.JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
@@ -27,6 +29,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/logout").authenticated()
                         .anyRequest().authenticated()
                 );
+
+        // JwtAuthenticationFilter 등록
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         // 소셜 로그인 설정 (경로 커스터마이징)
         http
@@ -42,6 +47,8 @@ public class SecurityConfig {
         // 개발단계에서만 csrf 잠시 꺼두기
         http
                 .csrf((auth) -> auth.disable());
+
+
 
         return http.build();
     }

@@ -27,15 +27,14 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         Member member = userDetails.getMember();
 
         // JWT 생성
-        String token = jwtUtil.createToken(member.getId(), member.getRole());
+        String token = jwtUtil.createToken(member.getId(), member.getEmail(), member.getRole());
 
-        // 닉네임이 아직 없는 경우 → nicknameRequired = true
+        // 로그 추가
+        // System.out.println("[DEBUG] Authentication successful : " + member.getEmail());
+
+        // 닉네임 유무 확인
         boolean usernameRequired = (member.getUsername() == null || member.getUsername().isBlank());
         String username = member.getUsername();
-
-        // JSON 응답 작성
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
 
         String json = """
         {
@@ -45,6 +44,10 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         }
         """.formatted(token, usernameRequired, username);
 
+        // JSON 응답 작성
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.setStatus(HttpServletResponse.SC_OK);
         response.getWriter().write(json);
     }
 }
