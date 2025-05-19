@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Getter
-public class DiarySaveRequestDto {
+public class DiaryRequestDto {
     @NotBlank
     private String content;
 
