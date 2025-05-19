@@ -1,11 +1,11 @@
 package com.moodmate.service;
 
-import com.moodmate.entity.Member;
+import com.moodmate.entity.User;
 import com.moodmate.oauth.CustomOauth2User;
 import com.moodmate.oauth.GoogleUserDetails;
 import com.moodmate.oauth.OAuth2UserInfo;
 import com.moodmate.oauth.Role;
-import com.moodmate.repository.MemberRepository;
+import com.moodmate.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -20,7 +20,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Slf4j
 public class CustomOauth2UserService extends DefaultOAuth2UserService {
-    private final MemberRepository memberRepository;
+    private final UserRepository memberRepository;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -43,14 +43,14 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
         String email = oAuth2UserInfo.getEmail();
         String picture = oAuth2UserInfo.getPicture();
 
-        Optional<Member> findMember = memberRepository.findByLoginId(loginId);
-        Member member;
+        Optional<User> findUser = memberRepository.findByLoginId(loginId);
+        User user;
 
-        if (findMember.isPresent()) {
-            member = findMember.get();
+        if (findUser.isPresent()) {
+            user = findUser.get();
         } else {
             // 신규 사용자 → 닉네임 미정 상태로 저장
-            member = memberRepository.save(Member.builder()
+            user = memberRepository.save(User.builder()
                     .loginId(loginId)
                     .provider(provider)
                     .providerId(providerId)
@@ -61,6 +61,6 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
                     .build());
         }
 
-        return new CustomOauth2User(member, oAuth2User.getAttributes());
+        return new CustomOauth2User(user, oAuth2User.getAttributes());
     }
 }

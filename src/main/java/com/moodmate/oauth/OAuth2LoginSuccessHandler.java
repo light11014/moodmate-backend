@@ -1,6 +1,6 @@
 package com.moodmate.oauth;
 
-import com.moodmate.entity.Member;
+import com.moodmate.entity.User;
 import com.moodmate.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,17 +24,17 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         // 사용자 정보 꺼내기
         CustomOauth2User userDetails = (CustomOauth2User) authentication.getPrincipal();
-        Member member = userDetails.getMember();
+        User user = userDetails.getUser();
 
         // JWT 생성
-        String token = jwtUtil.createToken(member.getId(), member.getEmail(), member.getRole());
+        String token = jwtUtil.createToken(user.getId(), user.getEmail(), user.getRole());
 
         // 로그 추가
-        // System.out.println("[DEBUG] Authentication successful : " + member.getEmail());
+        // System.out.println("[DEBUG] Authentication successful : " + user.getEmail());
 
         // 닉네임 유무 확인
-        boolean usernameRequired = (member.getUsername() == null || member.getUsername().isBlank());
-        String username = member.getUsername();
+        boolean usernameRequired = (user.getUsername() == null || user.getUsername().isBlank());
+        String username = user.getUsername();
 
         String json = """
         {

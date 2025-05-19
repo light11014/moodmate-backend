@@ -1,6 +1,6 @@
 package com.moodmate.dto;
 
-import com.moodmate.entity.Member;
+import com.moodmate.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -11,9 +11,9 @@ public class UserProfileDto {
     private String username;
     private String pictureUrl;
 
-    public UserProfileDto(Member member) {
-        this.email = member.getEmail();
-        this.username = member.getUsername();
-        this.pictureUrl = member.getPictureUrl();
+    public UserProfileDto(User user) {
+        this.email = user.getEmail();
+        this.username = user.getUsername();
+        this.pictureUrl = user.getPictureUrl();
     }
 }
