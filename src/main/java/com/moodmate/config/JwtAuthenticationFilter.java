@@ -1,9 +1,9 @@
 package com.moodmate.config;
 
-import com.moodmate.entity.User;
-import com.moodmate.oauth.CustomOauth2User;
-import com.moodmate.repository.UserRepository;
-import com.moodmate.util.JwtUtil;
+import com.moodmate.domain.user.entity.User;
+import com.moodmate.domain.user.ouath.CustomOauth2User;
+import com.moodmate.domain.user.UserRepository;
+import com.moodmate.common.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

@@ -1,7 +1,6 @@
 package com.moodmate.config;
 
-import com.moodmate.oauth.OAuth2LoginSuccessHandler;
-import com.moodmate.oauth.Role;
+import com.moodmate.domain.user.entity.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
