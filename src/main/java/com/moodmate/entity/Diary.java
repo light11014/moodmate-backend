@@ -1,5 +1,6 @@
 package com.moodmate.entity;
 
+import com.moodmate.util.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,7 +16,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class Diary {
+public class Diary extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -31,10 +32,6 @@ public class Diary {
 
     @OneToMany(mappedBy = "diary", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DiaryEmotion> diaryEmotions = new ArrayList<>();
-
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
 
     public void addDiaryEmotion(DiaryEmotion diaryEmotion) {
         diaryEmotions.add(diaryEmotion);
