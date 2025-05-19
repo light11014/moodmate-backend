@@ -1,7 +1,8 @@
-package com.moodmate.oauth;
+package com.moodmate.config;
 
-import com.moodmate.entity.Member;
-import com.moodmate.util.JwtUtil;
+import com.moodmate.domain.user.entity.User;
+import com.moodmate.common.JwtUtil;
+import com.moodmate.domain.user.ouath.CustomOauth2User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -24,17 +25,17 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         // 사용자 정보 꺼내기
         CustomOauth2User userDetails = (CustomOauth2User) authentication.getPrincipal();
-        Member member = userDetails.getMember();
+        User user = userDetails.getUser();
 
         // JWT 생성
-        String token = jwtUtil.createToken(member.getId(), member.getEmail(), member.getRole());
+        String token = jwtUtil.createToken(user.getId(), user.getEmail(), user.getRole());
 
         // 로그 추가
-        // System.out.println("[DEBUG] Authentication successful : " + member.getEmail());
+        // System.out.println("[DEBUG] Authentication successful : " + user.getEmail());
 
         // 닉네임 유무 확인
-        boolean usernameRequired = (member.getUsername() == null || member.getUsername().isBlank());
-        String username = member.getUsername();
+        boolean usernameRequired = (user.getUsername() == null || user.getUsername().isBlank());
+        String username = user.getUsername();
 
         String json = """
         {

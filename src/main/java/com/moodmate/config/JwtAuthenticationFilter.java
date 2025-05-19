@@ -1,16 +1,15 @@
 package com.moodmate.config;
 
-import com.moodmate.entity.Member;
-import com.moodmate.oauth.CustomOauth2User;
-import com.moodmate.repository.MemberRepository;
-import com.moodmate.util.JwtUtil;
+import com.moodmate.domain.user.entity.User;
+import com.moodmate.domain.user.ouath.CustomOauth2User;
+import com.moodmate.domain.user.UserRepository;
+import com.moodmate.common.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -23,7 +22,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final MemberRepository memberRepository;
+    private final UserRepository memberRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -42,9 +41,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String role = jwtUtil.getUserRoleFromToken(token);
 
                 // DB에서 사용자 조회
-                Member member = memberRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+                User user = memberRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
-                CustomOauth2User oAuthUser = new CustomOauth2User(member, null);
+                CustomOauth2User oAuthUser = new CustomOauth2User(user, null);
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(oAuthUser, null, oAuthUser.getAuthorities());

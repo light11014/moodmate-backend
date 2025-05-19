@@ -1,4 +1,4 @@
-package com.moodmate.oauth;
+package com.moodmate.domain.user.ouath;
 
 public interface OAuth2UserInfo {
     String getProvider();

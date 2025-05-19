@@ -1,6 +1,6 @@
-package com.moodmate.util;
+package com.moodmate.common;
 
-import com.moodmate.oauth.Role;
+import com.moodmate.domain.user.entity.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;

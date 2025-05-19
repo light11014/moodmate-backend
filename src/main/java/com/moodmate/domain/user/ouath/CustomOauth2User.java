@@ -1,6 +1,6 @@
-package com.moodmate.oauth;
+package com.moodmate.domain.user.ouath;
 
-import com.moodmate.entity.Member;
+import com.moodmate.domain.user.entity.User;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,12 +13,12 @@ import java.util.Map;
 public class CustomOauth2User implements UserDetails, OAuth2User {
 
     @Getter
-    private final Member member;
+    private final User user;
     private Map<String, Object> attributes;
 
-    public CustomOauth2User(Member member, Map<String, Object> attributes) {
+    public CustomOauth2User(User user, Map<String, Object> attributes) {
 
-        this.member = member;
+        this.user = user;
         this.attributes = attributes;
     }
 
@@ -35,7 +35,7 @@ public class CustomOauth2User implements UserDetails, OAuth2User {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Collection<GrantedAuthority> collection = new ArrayList<>();
-        collection.add((GrantedAuthority) () -> "ROLE_" + member.getRole().name());
+        collection.add((GrantedAuthority) () -> "ROLE_" + user.getRole().name());
 
         return collection;
     }
@@ -47,15 +47,15 @@ public class CustomOauth2User implements UserDetails, OAuth2User {
 
     @Override
     public String getUsername() {
-        return member.getLoginId();
+        return user.getLoginId();
     }
 
     public String getEmail() {
-        return member.getEmail();
+        return user.getEmail();
     }
 
     public String getNickname() {
-        return member.getUsername();
+        return user.getUsername();
     }
 
 }

@@ -1,11 +1,11 @@
-package com.moodmate.oauth;
+package com.moodmate.domain.user.ouath;
 
 import lombok.AllArgsConstructor;
 
 import java.util.Map;
 
 @AllArgsConstructor
-public class GoogleUserDetails implements OAuth2UserInfo{
+public class GoogleUserDetails implements OAuth2UserInfo {
     private Map<String, Object> attributes;
 
     @Override
