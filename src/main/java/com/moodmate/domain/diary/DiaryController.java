@@ -29,23 +29,24 @@ public class DiaryController {
         return ResponseEntity.ok(savedId);
     }
 
-    @GetMapping("/{yearMonth:\\d{4}-\\d{2}}")
-    public ResponseEntity<List<DiaryMonthSummaryDto>> getDiarySummariesByMonth(
-            @PathVariable String yearMonth,
+    @GetMapping("/monthly")
+    public ResponseEntity<List<DiaryMonthSummaryDto>> getMonthlyDiaries(
+            @RequestParam("date") String dateStr,
             @AuthenticationPrincipal CustomOauth2User userDetails) {
-        YearMonth ym = YearMonth.parse(yearMonth);
-        List<DiaryMonthSummaryDto> summaries = diaryService.getDiarySummariesByMonth(userDetails.getUser().getId(), ym);
+        YearMonth yearMonth = YearMonth.parse(dateStr); // "2025-05"
+        List<DiaryMonthSummaryDto> summaries = diaryService.getDiarySummariesByMonth(userDetails.getUser().getId(), yearMonth);
         return ResponseEntity.ok(summaries);
     }
 
-    @GetMapping("/{date:\\d{4}-\\d{2}-\\d{2}}")
+    @GetMapping("/by-date")
     public ResponseEntity<DiaryResponseDto> getDiaryByDate(
-            @PathVariable String date,
+            @RequestParam("date") String dateStr,
             @AuthenticationPrincipal CustomOauth2User userDetails) {
-        LocalDate d = LocalDate.parse(date);
-        DiaryResponseDto response = diaryService.getDiaryByDate(userDetails.getUser().getId(), d);
+        LocalDate date = LocalDate.parse(dateStr); // "2025-05-12"
+        DiaryResponseDto response = diaryService.getDiaryByDate(userDetails.getUser().getId(), date);
         return ResponseEntity.ok(response);
     }
+
 
 
 
