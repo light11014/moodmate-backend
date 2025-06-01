@@ -1,6 +1,8 @@
 package com.moodmate.domain.diary;
 
+import com.moodmate.domain.diary.dto.DiaryMonthSummaryDto;
 import com.moodmate.domain.diary.dto.DiaryRequestDto;
+import com.moodmate.domain.diary.dto.DiaryResponseDto;
 import com.moodmate.domain.diary.entity.Diary;
 import com.moodmate.domain.diary.entity.DiaryEmotion;
 import com.moodmate.domain.emotion.Emotion;
@@ -12,6 +14,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.AccessDeniedException;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +49,32 @@ public class DiaryService {
 
         return diary.getId();
     }
+
+    public DiaryResponseDto getDiaryByDate(Long userId, LocalDate date) {
+        Diary diary = diaryRepository.findByUserIdAndDate(userId, date)
+                .orElseThrow(() -> new IllegalArgumentException("해당 날짜의 일기가 없습니다."));
+        return new DiaryResponseDto(diary);
+    }
+
+    public List<DiaryMonthSummaryDto> getDiarySummariesByMonth(Long userId, YearMonth yearMonth) {
+        LocalDate start = yearMonth.atDay(1);
+        LocalDate end = yearMonth.atEndOfMonth();
+
+        List<Diary> diaries = diaryRepository.findByUserIdAndDateBetween(userId, start, end);
+
+        return diaries.stream()
+                .map(diary -> new DiaryMonthSummaryDto(
+                        diary.getDate(),
+                        diary.getDiaryEmotions().stream()
+                                .map(de -> new DiaryMonthSummaryDto.EmotionDto(
+                                        de.getEmotion().getName(),
+                                        de.getIntensity()))
+                                .toList()
+                ))
+                .toList();
+    }
+
+
 
     public void updateDiary(Long diaryId, DiaryRequestDto dto, Long userId) throws AccessDeniedException {
         // 일기 조회
