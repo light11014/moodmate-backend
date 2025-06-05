@@ -25,7 +25,7 @@ public class DiaryController {
     @PostMapping
     public ResponseEntity<Long> saveDiary(@RequestBody @Valid DiaryRequestDto dto,
                                           @AuthenticationPrincipal CustomOauth2User userDetails) {
-        Long savedId = diaryService.saveDiary(dto, userDetails.getUser().getId());
+        Long savedId = diaryService.saveDiary(userDetails.getUser().getId(), dto);
         return ResponseEntity.ok(savedId);
     }
 

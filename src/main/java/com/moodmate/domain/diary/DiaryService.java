@@ -27,7 +27,7 @@ public class DiaryService {
     private final EmotionRepository emotionRepository;
     private final UserRepository userRepository;
 
-    public Long saveDiary(DiaryRequestDto dto, Long userId) {
+    public Long saveDiary(Long userId, DiaryRequestDto dto) {
         // 작성자 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
