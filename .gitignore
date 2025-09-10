@@ -35,3 +35,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+src/main/resources/env-prod.properties
+src/main/resources/env-local.properties

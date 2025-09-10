@@ -1,4 +1,8 @@
 spring:
+  config:
+    # import: "classpath:env-local.properties"   # 기본값: 로컬용 불러오기
+    import: "classpath:env-prod.properties"   # 배포 시 이걸로 교체
+
   security:
     oauth2:
       client:
@@ -30,19 +34,18 @@ spring:
             user-name-attribute: id
 
   datasource:
-    # MySQL
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/moodmate?&serverTimezone=Asia/Seoul
-    username: root
-    password: root
+    driver-class-name: ${DB_DRIVER}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
 
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
     properties:
       hibernate:
         format_sql: true
-        default_batch_fetch_size: 1000
-#      show_sql: true
+        show-sql: true
