@@ -3,6 +3,7 @@ package com.moodmate.domain.diary.entity;
 import com.moodmate.common.BaseTimeEntity;
 import com.moodmate.domain.user.entity.User;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -43,6 +44,7 @@ public class Diary extends BaseTimeEntity {
         diaryEmotion.setDiary(this);
     }
 
+    @Builder
     public Diary(String content, LocalDate date, User user) {
         this.content = content;
         this.date = date;

@@ -1,4 +1,4 @@
-package com.moodmate.domain.diary;
+package com.moodmate.domain.diary.repository;
 
 import com.moodmate.domain.diary.entity.Diary;
 import org.springframework.data.jpa.repository.JpaRepository;
