@@ -1,11 +1,13 @@
 package com.moodmate.config;
 
 import com.moodmate.domain.user.entity.Role;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -18,36 +20,41 @@ public class SecurityConfig {
     private final com.moodmate.config.JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                .authorizeHttpRequests((auth) -> auth
+                .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/index.html", "/api/auth/login/**", "/login/oauth2/code/**").permitAll()
-                        .requestMatchers("/api/auth/login/admin").hasRole(Role.ADMIN.name())
-                        .requestMatchers("/api/users/**").hasAnyRole(Role.ADMIN.name(), Role.USER.name())
+                        .requestMatchers("/api/auth/login/admin").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/api/users/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
                         .requestMatchers("/api/auth/logout").authenticated()
                         .anyRequest().authenticated()
-                );
+                )
 
-        // JwtAuthenticationFilter 등록
-        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                // JWT 필터 추가
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
-        // 소셜 로그인 설정 (경로 커스터마이징)
-        http
+                // 소셜 로그인 설정
                 .oauth2Login(oauth2 -> oauth2
-                        .authorizationEndpoint(endpoint ->
-                                endpoint.baseUri("/api/auth/login") // 로그인 시작 경로 변경
-                        )
+                        .authorizationEndpoint(endpoint -> endpoint.baseUri("/api/auth/login"))
                         .successHandler(oAuth2LoginSuccessHandler)
+                )
+
+                // CSRF, FormLogin 비활성화 (REST API 서버이므로)
+                .csrf(csrf -> csrf.disable())
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable())
+
+                // 인증 실패시 401 반환하도록 변경
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(
+                                (request, response, authException) -> {
+                                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                    response.setContentType("application/json;charset=UTF-8");
+                                    response.getWriter().write("{\"error\":\"Unauthorized\"}");
+                                }
+                        )
                 );
-
-        // csrf : 사이트 위변조 방지 설정 (스프링 시큐리티에는 자동으로 설정 되어 있음)
-        // csrf기능 켜져있으면 post 요청을 보낼때 csrf 토큰도 보내줘야 로그인 진행됨 !
-        // 개발단계에서만 csrf 잠시 꺼두기
-        http
-                .csrf((auth) -> auth.disable());
-
-
 
         return http.build();
     }

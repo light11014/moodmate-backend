@@ -5,6 +5,7 @@ import com.moodmate.domain.diary.dto.DiaryRequestDto;
 import com.moodmate.domain.diary.dto.DiaryResponseDto;
 import com.moodmate.domain.diary.entity.Diary;
 import com.moodmate.domain.diary.entity.DiaryEmotion;
+import com.moodmate.domain.diary.repository.DiaryRepository;
 import com.moodmate.domain.emotion.Emotion;
 import com.moodmate.domain.user.entity.User;
 import com.moodmate.domain.emotion.EmotionRepository;
