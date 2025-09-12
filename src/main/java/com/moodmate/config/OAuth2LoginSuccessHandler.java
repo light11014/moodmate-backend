@@ -41,6 +41,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         response.addCookie(cookie);
 
         // 리다이렉트
-        response.sendRedirect("http://localhost:3000/calendar");
+        response.sendRedirect("http://localhost:3000/redirect");
     }
 }

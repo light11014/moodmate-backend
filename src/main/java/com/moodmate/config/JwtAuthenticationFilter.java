@@ -6,6 +6,7 @@ import com.moodmate.domain.user.UserRepository;
 import com.moodmate.common.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -29,31 +30,36 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        String authHeader = request.getHeader("Authorization");
+        String token = null;
+        Cookie[] cookies = request.getCookies();
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-
-            // System.out.println("[DEBUG] Extracted JWT token: " + token);
-
-            if (jwtUtil.validateToken(token)) {
-                Long userId = jwtUtil.getUserIdFromToken(token);
-                String role = jwtUtil.getUserRoleFromToken(token);
-
-                // DB에서 사용자 조회
-                User user = memberRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-
-                CustomOauth2User oAuthUser = new CustomOauth2User(user, null);
-
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(oAuthUser, null, oAuthUser.getAuthorities());
-
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                // SecurityContext에 인증 정보 저장
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("jwt_token".equals(cookie.getName())) {
+                    token = cookie.getValue();
+                    break;
+                }
             }
         }
+
+        if (token != null && jwtUtil.validateToken(token)) {
+            Long userId = jwtUtil.getUserIdFromToken(token);
+
+            // DB에서 사용자 조회
+            User user = memberRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            CustomOauth2User oAuthUser = new CustomOauth2User(user, null);
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(oAuthUser, null, oAuthUser.getAuthorities());
+
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+            // SecurityContext에 인증 정보 저장
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
+
         filterChain.doFilter(request, response);
     }
 }
