@@ -1,8 +1,9 @@
 package com.moodmate.config;
 
-import com.moodmate.domain.user.entity.User;
 import com.moodmate.common.JwtUtil;
+import com.moodmate.domain.user.entity.User;
 import com.moodmate.domain.user.ouath.CustomOauth2User;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -30,26 +31,16 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         // JWT 생성
         String token = jwtUtil.createToken(user.getId(), user.getEmail(), user.getRole());
 
-        // 로그 추가
-        // System.out.println("[DEBUG] Authentication successful : " + user.getEmail());
+        // 쿠키 생성
+        Cookie cookie = new Cookie("jwt_token", token);
+        cookie.setPath("/");
+        cookie.setHttpOnly(true);
+        // cookie.setSecure(true); // HTTPS 환경에서 사용
 
-        // 닉네임 유무 확인
-        boolean usernameRequired = (user.getUsername() == null || user.getUsername().isBlank());
-        String username = user.getUsername();
+        // 쿠키 추가
+        response.addCookie(cookie);
 
-        String json = """
-        {
-            "token": "%s",
-            "usernameRequired": %s
-            "username": %s
-        }
-        """.formatted(token, usernameRequired, username);
-
-        // JSON 응답 작성
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.getWriter().write(json);
+        // 리다이렉트
+        response.sendRedirect("http://localhost:3000/calendar");
     }
 }
-
