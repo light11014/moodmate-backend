@@ -1,6 +1,6 @@
 package com.moodmate.domain.emotion;
 
-import com.moodmate.domain.emotion.dto.EmotionResponseDto;
+import com.moodmate.domain.emotion.dto.EmotionResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,9 +13,9 @@ public class EmotionService {
 
     private final EmotionRepository emotionRepository;
 
-    public List<EmotionResponseDto> getAllEmotions() {
+    public List<EmotionResponse> getAllEmotions() {
         return emotionRepository.findAll().stream()
-                .map(e -> new EmotionResponseDto(e.getId(), e.getName()))
+                .map(e -> new EmotionResponse(e.getId(), e.getName()))
                 .collect(Collectors.toList());
     }
 }

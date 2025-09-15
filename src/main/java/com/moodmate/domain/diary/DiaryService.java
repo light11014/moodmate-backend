@@ -1,8 +1,9 @@
 package com.moodmate.domain.diary;
 
-import com.moodmate.domain.diary.dto.DiaryMonthSummaryDto;
-import com.moodmate.domain.diary.dto.DiaryRequestDto;
-import com.moodmate.domain.diary.dto.DiaryResponseDto;
+import com.moodmate.domain.diary.dto.DiaryMonthSummaryResponse;
+import com.moodmate.domain.diary.dto.DiaryRequest;
+import com.moodmate.domain.diary.dto.DiaryResponse;
+import com.moodmate.domain.diary.dto.EmotionDto;
 import com.moodmate.domain.diary.entity.Diary;
 import com.moodmate.domain.diary.entity.DiaryEmotion;
 import com.moodmate.domain.diary.repository.DiaryRepository;
@@ -11,6 +12,7 @@ import com.moodmate.domain.user.entity.User;
 import com.moodmate.domain.emotion.EmotionRepository;
 import com.moodmate.domain.user.UserRepository;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +30,7 @@ public class DiaryService {
     private final EmotionRepository emotionRepository;
     private final UserRepository userRepository;
 
-    public Long saveDiary(Long userId, DiaryRequestDto dto) {
+    public Long saveDiary(Long userId, @Valid DiaryRequest dto) {
         // 작성자 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
@@ -36,38 +38,38 @@ public class DiaryService {
         // Diary 생성
         Diary diary = new Diary(dto.getContent(), dto.getDate(), user);
 
-        // 3. 감정 리스트 처리
-        for (DiaryRequestDto.EmotionRequest e : dto.getEmotions()) {
-            Emotion emotion = emotionRepository.findByName(e.getName())
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 감정입니다: " + e.getName()));
+        // 감정 리스트 처리
+        for (EmotionDto e : dto.getEmotions()) {
+            Emotion emotion = emotionRepository.findByName(e.name())
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 감정입니다: " + e.name()));
 
-            DiaryEmotion diaryEmotion = new DiaryEmotion(emotion, e.getIntensity());
+            DiaryEmotion diaryEmotion = new DiaryEmotion(emotion, e.intensity());
             diary.addDiaryEmotion(diaryEmotion); // 양방향 연결
         }
 
-        // 4. 저장 (Cascade로 DiaryEmotion까지 저장됨)
+        // 저장 (Cascade로 DiaryEmotion까지 저장됨)
         diaryRepository.save(diary);
 
         return diary.getId();
     }
 
-    public DiaryResponseDto getDiaryByDate(Long userId, LocalDate date) {
+    public DiaryResponse getDiaryByDate(Long userId, LocalDate date) {
         Diary diary = diaryRepository.findByUserIdAndDate(userId, date)
                 .orElseThrow(() -> new IllegalArgumentException("해당 날짜의 일기가 없습니다."));
-        return new DiaryResponseDto(diary);
+        return new DiaryResponse(diary);
     }
 
-    public List<DiaryMonthSummaryDto> getDiarySummariesByMonth(Long userId, YearMonth yearMonth) {
+    public List<DiaryMonthSummaryResponse> getDiarySummariesByMonth(Long userId, YearMonth yearMonth) {
         LocalDate start = yearMonth.atDay(1);
         LocalDate end = yearMonth.atEndOfMonth();
 
         List<Diary> diaries = diaryRepository.findByUserIdAndDateBetween(userId, start, end);
 
         return diaries.stream()
-                .map(diary -> new DiaryMonthSummaryDto(
+                .map(diary -> new DiaryMonthSummaryResponse(
                         diary.getDate(),
                         diary.getDiaryEmotions().stream()
-                                .map(de -> new DiaryMonthSummaryDto.EmotionDto(
+                                .map(de -> new EmotionDto(
                                         de.getEmotion().getName(),
                                         de.getIntensity()))
                                 .toList()
@@ -77,7 +79,7 @@ public class DiaryService {
 
 
 
-    public void updateDiary(Long diaryId, DiaryRequestDto dto, Long userId) throws AccessDeniedException {
+    public void updateDiary(Long diaryId, DiaryRequest dto, Long userId) throws AccessDeniedException {
         // 일기 조회
         Diary diary = diaryRepository.findById(diaryId)
                 .orElseThrow(() -> new IllegalArgumentException("일기를 찾을 수 없습니다."));
@@ -94,10 +96,10 @@ public class DiaryService {
         diary.getDiaryEmotions().clear();
 
         // 새 감정들 추가
-        for (DiaryRequestDto.EmotionRequest e : dto.getEmotions()) {
-            Emotion emotion = emotionRepository.findByName(e.getName())
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 감정입니다: " + e.getName()));
-            DiaryEmotion de = new DiaryEmotion(emotion, e.getIntensity());
+        for (EmotionDto e : dto.getEmotions()) {
+            Emotion emotion = emotionRepository.findByName(e.name())
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 감정입니다: " + e.name()));
+            DiaryEmotion de = new DiaryEmotion(emotion, e.intensity());
             diary.addDiaryEmotion(de);
         }
     }
