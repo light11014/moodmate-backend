@@ -3,6 +3,9 @@ spring:
     import: "classpath:env-local.properties"   # 기본값: 로컬용 불러오기
     #import: "classpath:env-prod.properties"   # 배포 시 이걸로 교체
 
+  profiles:
+    active: dev
+
   security:
     oauth2:
       client:
@@ -49,3 +52,12 @@ spring:
       hibernate:
         format_sql: true
         show-sql: true
+
+springdoc:
+  override-with-generic-response: false
+  default-produces-media-type: application/json
+  writer-with-default-pretty-printer: true
+  swagger-ui:
+    display-request-duration: true
+  api-docs:
+    resolve-schema-properties: false

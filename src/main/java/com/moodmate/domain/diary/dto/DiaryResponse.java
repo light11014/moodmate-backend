@@ -1,31 +1,22 @@
 package com.moodmate.domain.diary.dto;
 
 import com.moodmate.domain.diary.entity.Diary;
-import com.moodmate.domain.diary.entity.DiaryEmotion;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
 import java.util.List;
 
 @Getter
-public class DiaryResponseDto {
+public class DiaryResponse {
+    @Schema(description = "일기 내용", example = "오늘은 날씨가 좋았다.")
     private final String content;
+
     private final List<EmotionDto> emotions;
 
-    public DiaryResponseDto(Diary diary) {
+    public DiaryResponse(Diary diary) {
         this.content = diary.getContent();
         this.emotions = diary.getDiaryEmotions().stream()
                 .map(e -> new EmotionDto(e.getEmotion().getName(), e.getIntensity()))
                 .toList();
-    }
-
-    @Getter
-    public static class EmotionDto {
-        private final String name;
-        private final int intensity;
-
-        public EmotionDto(String name, int intensity) {
-            this.name = name;
-            this.intensity = intensity;
-        }
     }
 }

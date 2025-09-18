@@ -6,12 +6,12 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class UserProfileDto {
+public class UserProfileResponse {
     private String email;
     private String username;
     private String pictureUrl;
 
-    public UserProfileDto(User user) {
+    public UserProfileResponse(User user) {
         this.email = user.getEmail();
         this.username = user.getUsername();
         this.pictureUrl = user.getPictureUrl();
