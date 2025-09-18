@@ -10,6 +10,7 @@ import com.moodmate.domain.emotion.EmotionRepository;
 import com.moodmate.domain.user.UserRepository;
 import com.moodmate.domain.user.entity.Role;
 import com.moodmate.domain.user.entity.User;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,9 +74,9 @@ public class TrackingApiIntegrationTest {
                 .build();
 
         // DiaryEmotion 추가 (addDiaryEmotion 활용)
-        diary1.addDiaryEmotion(new DiaryEmotion(joy, 3));
-        diary1.addDiaryEmotion(new DiaryEmotion(sad, 2));
-        diary2.addDiaryEmotion(new DiaryEmotion(joy, 4));
+        diary1.addDiaryEmotion(new DiaryEmotion(joy, 4));
+        diary1.addDiaryEmotion(new DiaryEmotion(sad, 3));
+        diary2.addDiaryEmotion(new DiaryEmotion(joy, 3));
 
         diaryRepository.save(diary1);
         diaryRepository.save(diary2);
@@ -84,24 +85,38 @@ public class TrackingApiIntegrationTest {
     @Test
     void 감정빈도_API가_JSON으로_응답() throws Exception {
         mockMvc.perform(get("/api/analytics/emotions/frequency")
-                        .header("Authorization", "Bearer " + token)
-                        .param("userId", String.valueOf(user.getId()))
+                        .cookie(new Cookie("jwt_token", token))
                         .param("startDate", "2025-09-01")
                         .param("endDate", "2025-09-05"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].emotion.name").value("기쁨"))
-                .andExpect(jsonPath("$[0].count").value(2))
-                .andExpect(jsonPath("$[1].emotion.name").value("슬픔"))
-                .andExpect(jsonPath("$[1].count").value(1));
+                .andExpect(jsonPath("$.meta.totalRecords").value(2))
+                .andExpect(jsonPath("$.data[0].emotion").value("기쁨"))
+                .andExpect(jsonPath("$.data[0].count").value(2))
+                .andExpect(jsonPath("$.data[1].emotion").value("슬픔"))
+                .andExpect(jsonPath("$.data[1].count").value(1));
     }
 
     @Test
     void 감정빈도_API_JWT_없을때_401() throws Exception {
-        mockMvc.perform(get("/analytics/emotions/frequency")
-                        .param("userId", String.valueOf(user.getId()))
+        mockMvc.perform(get("/api/analytics/emotions/frequency")
                         .param("startDate", "2025-09-01")
                         .param("endDate", "2025-09-05"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void 감정강도비율_API가_JSON으로_응답() throws Exception {
+        mockMvc.perform(get("/api/analytics/emotions/ratio")
+                        .cookie(new Cookie("jwt_token", token))
+                        .param("startDate", "2025-09-01")
+                        .param("endDate", "2025-09-05"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.meta.totalRecords").value(2))
+                .andExpect(jsonPath("$.data[0].emotion").value("기쁨"))
+                .andExpect(jsonPath("$.data[0].ratio").value(0.7))
+                .andExpect(jsonPath("$.data[1].emotion").value("슬픔"))
+                .andExpect(jsonPath("$.data[1].ratio").value(0.3));
     }
 }
