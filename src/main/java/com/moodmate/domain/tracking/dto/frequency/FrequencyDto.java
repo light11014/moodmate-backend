@@ -2,7 +2,7 @@ package com.moodmate.domain.tracking.dto.frequency;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-public record EmotionFrequencyDto(
+public record FrequencyDto(
         @Schema(description = "감정 이름", example = "기쁨")
         String emotion,
 

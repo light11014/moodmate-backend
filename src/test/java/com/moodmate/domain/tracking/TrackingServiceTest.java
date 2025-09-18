@@ -1,6 +1,7 @@
 package com.moodmate.domain.tracking;
 
 import com.moodmate.domain.diary.repository.DiaryEmotionRepository;
+import com.moodmate.domain.emotion.EmotionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,11 +17,14 @@ class TrackingServiceTest {
     private TrackingService trackingService;
     private DiaryEmotionRepository diaryEmotionRepository;
 
+    private EmotionRepository emotionRepository;
+
     @BeforeEach
     void setUp() {
         // Repository는 mock 처리
         diaryEmotionRepository = mock(DiaryEmotionRepository.class);
-        trackingService = new TrackingService(diaryEmotionRepository);
+        emotionRepository = mock(EmotionRepository.class);
+        trackingService = new TrackingService(diaryEmotionRepository, emotionRepository);
     }
 
     @Test
