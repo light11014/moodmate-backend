@@ -8,7 +8,6 @@ import com.moodmate.domain.diary.repository.DiaryRepository;
 import com.moodmate.domain.emotion.Emotion;
 import com.moodmate.domain.emotion.EmotionRepository;
 import com.moodmate.domain.user.UserRepository;
-import com.moodmate.domain.user.entity.Role;
 import com.moodmate.domain.user.entity.User;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,11 +19,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,7 +29,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class TrackingApiIntegrationTest {
+public class TrackingApiTest {
 
     @Autowired MockMvc mockMvc;
     @Autowired UserRepository userRepository;

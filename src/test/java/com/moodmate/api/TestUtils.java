@@ -8,15 +8,13 @@ import com.moodmate.domain.user.entity.User;
 public class TestUtils {
 
     public static User createUser(UserRepository userRepository) {
-        return userRepository.save(User.builder()
-                .username("테스트유저")
-                .role(Role.USER)
-                .loginId("google_123")
-                .provider("google")
-                .providerId("123")
-                .email("test123@example.com")
-                .pictureUrl("http://example.com/img.png")
-                .build());
+        return userRepository.save(User.createOAuthUser(
+                "google_123",
+                "google",
+                "123",
+                Role.USER,
+                null,
+                "test123@example.com"));
     }
 
     public static String createToken(JwtUtil provider, User user) {
