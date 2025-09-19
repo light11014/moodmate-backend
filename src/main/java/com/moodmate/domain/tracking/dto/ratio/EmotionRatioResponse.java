@@ -9,8 +9,11 @@ public record EmotionRatioResponse(
         @Schema(description = "메타 데이터")
         RatioMeta meta,
 
-        @Schema(description = "감정 비율 데이터")
-        List<EmotionRatioDto> data
+        @Schema(
+                description = "감정 강도 비율 데이터",
+                example = "[{\"emotion\":\"기쁨\",\"count\":0.7},{\"emotion\":\"슬픔\",\"count\":0.3}]"
+        )
+        List<RatioDto> data
 ) {
 
 }

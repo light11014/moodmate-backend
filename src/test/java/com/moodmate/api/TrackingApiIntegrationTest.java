@@ -20,7 +20,10 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
+import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -59,6 +62,11 @@ public class TrackingApiIntegrationTest {
         // Emotion 생성
         Emotion joy = emotionRepository.save(new Emotion("기쁨"));
         Emotion sad = emotionRepository.save(new Emotion("슬픔"));
+        Emotion surprised = emotionRepository.save(new Emotion("놀람"));
+        Emotion angry = emotionRepository.save(new Emotion("분노"));
+        Emotion proud = emotionRepository.save(new Emotion("뿌듯"));
+        Emotion depressed = emotionRepository.save(new Emotion("우울"));
+        emotionRepository.saveAll(List.of(joy, sad, surprised, angry, proud, depressed));
 
         // Diary 생성 + DiaryEmotion 연결
         Diary diary1 = Diary.builder()
@@ -67,19 +75,40 @@ public class TrackingApiIntegrationTest {
                 .user(user)
                 .build();
 
+        diary1.addDiaryEmotion(new DiaryEmotion(joy, 5));
+        diary1.addDiaryEmotion(new DiaryEmotion(sad, 5));
+
         Diary diary2 = Diary.builder()
                 .content("오늘은 조금 힘들었다")
                 .date(LocalDate.of(2025, 9, 2))
                 .user(user)
                 .build();
 
-        // DiaryEmotion 추가 (addDiaryEmotion 활용)
-        diary1.addDiaryEmotion(new DiaryEmotion(joy, 4));
-        diary1.addDiaryEmotion(new DiaryEmotion(sad, 3));
-        diary2.addDiaryEmotion(new DiaryEmotion(joy, 3));
+        diary2.addDiaryEmotion(new DiaryEmotion(sad, 5));
+        diary2.addDiaryEmotion(new DiaryEmotion(depressed, 5));
+
+        Diary diary3 = Diary.builder()
+                .content("오늘은 즐거운 하루였다")
+                .date(LocalDate.of(2025, 10, 1))
+                .user(user)
+                .build();
+
+        diary3.addDiaryEmotion(new DiaryEmotion(joy, 4));
+        diary3.addDiaryEmotion(new DiaryEmotion(proud, 4));
+
+        Diary diary4 = Diary.builder()
+                .content("오늘은 즐거운 하루였다")
+                .date(LocalDate.of(2025, 8, 1))
+                .user(user)
+                .build();
+
+        diary4.addDiaryEmotion(new DiaryEmotion(surprised, 4));
+        diary4.addDiaryEmotion(new DiaryEmotion(sad, 4));
 
         diaryRepository.save(diary1);
         diaryRepository.save(diary2);
+        diaryRepository.save(diary3);
+        diaryRepository.save(diary4);
     }
 
     @Test
@@ -87,14 +116,12 @@ public class TrackingApiIntegrationTest {
         mockMvc.perform(get("/api/analytics/emotions/frequency")
                         .cookie(new Cookie("jwt_token", token))
                         .param("startDate", "2025-09-01")
-                        .param("endDate", "2025-09-05"))
+                        .param("endDate", "2025-09-30"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.meta.totalRecords").value(2))
-                .andExpect(jsonPath("$.data[0].emotion").value("기쁨"))
-                .andExpect(jsonPath("$.data[0].count").value(2))
-                .andExpect(jsonPath("$.data[1].emotion").value("슬픔"))
-                .andExpect(jsonPath("$.data[1].count").value(1));
+                .andExpect(jsonPath("$.meta.totalRecords").value(3))
+                .andExpect(jsonPath("$.data[?(@.emotion == '기쁨')].count").value(1))
+                .andExpect(jsonPath("$.data[?(@.emotion == '슬픔')].count").value(2));
     }
 
     @Test
@@ -113,10 +140,36 @@ public class TrackingApiIntegrationTest {
                         .param("endDate", "2025-09-05"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.meta.totalRecords").value(2))
-                .andExpect(jsonPath("$.data[0].emotion").value("기쁨"))
-                .andExpect(jsonPath("$.data[0].ratio").value(0.7))
-                .andExpect(jsonPath("$.data[1].emotion").value("슬픔"))
-                .andExpect(jsonPath("$.data[1].ratio").value(0.3));
+                .andExpect(jsonPath("$.meta.totalRecords").value(3))
+                .andExpect(jsonPath("$.data[?(@.emotion == '기쁨')].ratio").value(0.25))
+                .andExpect(jsonPath("$.data[?(@.emotion == '슬픔')].ratio").value(0.5));
+    }
+
+    @Test
+    void 감정_추세_API가_JSON으로_응답() throws Exception {
+        mockMvc.perform(get("/api/analytics/emotions/trend")
+                        .cookie(new Cookie("jwt_token", token))
+                        .param("startDate", "2025-08-01")
+                        .param("endDate", "2025-09-30")
+                        .param("emotions", "슬픔"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.meta.selectedEmotions", containsInAnyOrder("슬픔")))
+                .andExpect(jsonPath("$.data[*].emotion", containsInAnyOrder("슬픔")))
+                .andExpect(jsonPath("$.data[?(@.emotion == '슬픔')].timeline[0].date").value("2025-08-01"))
+                .andExpect(jsonPath("$.data[?(@.emotion == '슬픔')].timeline[0].intensity").value(4));
+    }
+
+    @Test
+    void 감정_추세_API_공백조회_응답() throws Exception {
+        mockMvc.perform(get("/api/analytics/emotions/trend")
+                        .cookie(new Cookie("jwt_token", token))
+                        .param("startDate", "2025-08-01")
+                        .param("endDate", "2025-09-30"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.meta.selectedEmotions", hasSize(6)))
+                .andExpect(jsonPath("$.data[?(@.emotion == '슬픔')].timeline[0].date").value("2025-08-01"))
+                .andExpect(jsonPath("$.data[?(@.emotion == '슬픔')].timeline[0].intensity").value(4));
     }
 }

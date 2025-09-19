@@ -13,7 +13,7 @@ public record RatioMeta(
 
         LocalDate endDate,
 
-        @Schema(description = "감정 개수", example = "1")
+        @Schema(description = "데이터 개수", example = "2")
         long totalRecords,
 
         LocalDateTime generatedAt)  implements TrackingMetaBase
