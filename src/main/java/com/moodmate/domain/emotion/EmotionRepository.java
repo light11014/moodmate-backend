@@ -7,4 +7,6 @@ import java.util.Optional;
 
 public interface EmotionRepository extends JpaRepository<Emotion, Long> {
     Optional<Emotion> findByName(String name);
+
+    boolean existsByName(String name);
 }
