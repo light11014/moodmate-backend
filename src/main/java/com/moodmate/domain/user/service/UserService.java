@@ -26,5 +26,10 @@ public class UserService {
                         userInfo.getEmail()
                 )));
     }
+
+    public User findById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("unexpected User"));
+    }
 }
 

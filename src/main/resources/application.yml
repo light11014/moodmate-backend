@@ -61,3 +61,7 @@ springdoc:
     display-request-duration: true
   api-docs:
     resolve-schema-properties: false
+
+jwt:
+  issuer: moodmate@gmail.com
+  secret_key: ${JWT_SECRET_KEY}

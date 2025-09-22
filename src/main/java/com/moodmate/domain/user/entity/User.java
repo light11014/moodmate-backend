@@ -65,5 +65,4 @@ public class User {
         user.username = null;
         return user;
     }
-
 }

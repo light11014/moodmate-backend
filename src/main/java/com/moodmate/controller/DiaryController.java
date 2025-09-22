@@ -25,7 +25,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 
-@Tag(name = "Diary-Controller", description = "감정 일기 관련 API")
+@Tag(name = "감정 일기", description = "Diary API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/diaries")

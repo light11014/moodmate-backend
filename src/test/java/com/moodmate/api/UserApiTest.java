@@ -1,6 +1,6 @@
 package com.moodmate.api;
 
-import com.moodmate.common.JwtUtil;
+import com.moodmate.config.jwt.JwtTokenProvider;
 import com.moodmate.domain.diary.entity.Diary;
 import com.moodmate.domain.diary.entity.DiaryEmotion;
 import com.moodmate.domain.diary.repository.DiaryEmotionRepository;
@@ -18,7 +18,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -39,7 +38,7 @@ public class UserApiTest {
     DiaryEmotionRepository diaryEmotionRepository;
 
     @Autowired
-    JwtUtil jwtTokenProvider; // JWT 발급 유틸
+    JwtTokenProvider jwtTokenProvider; // JWT 발급 유틸
 
     private String token;
 
@@ -56,7 +55,7 @@ public class UserApiTest {
         user = TestUtils.createUser(userRepository);
 
         // 실제 JWT 토큰 발급
-        token = TestUtils.createToken(jwtTokenProvider, user);
+        token = TestUtils.createAccessToken(jwtTokenProvider, user);
 
         // Emotion 생성
         Emotion joy = emotionRepository.save(new Emotion("기쁨"));
@@ -81,7 +80,7 @@ public class UserApiTest {
 
         // when
         mockMvc.perform(delete("/api/users/me")
-                    .cookie(new Cookie("jwt_token", token)))
+                    .header("Authorization", "Bearer " + token))
                     .andExpect(status().isOk());
 
         // then

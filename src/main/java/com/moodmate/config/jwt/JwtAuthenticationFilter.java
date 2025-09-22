@@ -1,16 +1,17 @@
-package com.moodmate.config;
+package com.moodmate.config.jwt;
 
+import com.moodmate.config.jwt.JwtTokenProvider;
+import com.moodmate.domain.token.TokenType;
 import com.moodmate.domain.user.entity.User;
 import com.moodmate.domain.user.ouath.CustomOauth2User;
-import com.moodmate.domain.user.UserRepository;
-import com.moodmate.common.JwtUtil;
+import com.moodmate.domain.user.service.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -22,42 +23,24 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtUtil jwtUtil;
-    private final UserRepository memberRepository;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final UserService userService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        String token = null;
-        Cookie[] cookies = request.getCookies();
+        // 요청 헤더의 Authorization 키의 값 조회 후 접두사 제거 -> Access Token
+        String authHeader = request.getHeader("Authorization");
+        String token = getAccessToken(authHeader);
 
-        String path = request.getRequestURI();
 
-        if (path.startsWith("/swagger-ui")
-                || path.startsWith("/v3/api-docs")
-                || path.startsWith("/swagger-resources")
-                || path.equals("/swagger-ui.html")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if ("jwt_token".equals(cookie.getName())) {
-                    token = cookie.getValue();
-                    break;
-                }
-            }
-        }
-
-        if (token != null && jwtUtil.validateToken(token)) {
-            Long userId = jwtUtil.getUserIdFromToken(token);
+        if (token != null && jwtTokenProvider.validateToken(token, TokenType.ACCESS)) {
+            Long userId = jwtTokenProvider.getUserId(token);
 
             // DB에서 사용자 조회
-            User user = memberRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+            User user = userService.findById(userId);
 
             CustomOauth2User oAuthUser = new CustomOauth2User(user, null);
 
@@ -71,5 +54,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private String getAccessToken(String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+        return null;
     }
 }
