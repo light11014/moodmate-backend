@@ -1,6 +1,7 @@
 package com.moodmate.domain.user.entity;
 
 import com.moodmate.domain.diary.entity.Diary;
+import com.moodmate.domain.token.RefreshToken;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -42,6 +43,9 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<Diary> diaries = new ArrayList<>();
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private RefreshToken refreshToken;
 
     // 편의 메서드
     public void addDiary(Diary diary) {

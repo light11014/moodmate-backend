@@ -29,7 +29,7 @@ public class CustomOauth2User implements UserDetails, OAuth2User {
 
     @Override
     public String getName() {
-        return null;
+        return user.getLoginId();
     }
 
     @Override
