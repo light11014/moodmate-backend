@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "Emotion-Controller", description = "감정 관련 API")
+@Tag(name = "감정", description = "Emotion API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/emotions")

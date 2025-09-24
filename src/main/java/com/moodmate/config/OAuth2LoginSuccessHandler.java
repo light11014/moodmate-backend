@@ -1,6 +1,7 @@
 package com.moodmate.config;
 
-import com.moodmate.common.JwtUtil;
+import com.moodmate.config.jwt.JwtTokenProvider;
+import com.moodmate.domain.token.service.RefreshTokenService;
 import com.moodmate.domain.user.entity.User;
 import com.moodmate.domain.user.ouath.CustomOauth2User;
 import jakarta.servlet.http.Cookie;
@@ -17,7 +18,8 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
-    private final JwtUtil jwtUtil;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenService refreshTokenService;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
@@ -29,10 +31,12 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         User user = userDetails.getUser();
 
         // JWT 생성
-        String token = jwtUtil.createToken(user.getId(), user.getEmail(), user.getRole());
+        String token = jwtTokenProvider.createRefreshToken(user.getId());
+        refreshTokenService.saveRefreshToken(user, token);
+
 
         // 쿠키 생성
-        Cookie cookie = new Cookie("jwt_token", token);
+        Cookie cookie = new Cookie("mm-rt", token);
         cookie.setPath("/");
         cookie.setHttpOnly(true);
         // cookie.setSecure(true); // HTTPS 환경에서 사용

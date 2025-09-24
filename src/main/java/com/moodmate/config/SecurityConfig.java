@@ -1,6 +1,6 @@
 package com.moodmate.config;
 
-import com.moodmate.domain.user.entity.Role;
+import com.moodmate.config.jwt.JwtAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -21,8 +21,9 @@ import java.util.Arrays;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
-    private final com.moodmate.config.JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomLogoutSuccessHandler customLogoutSuccessHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -30,7 +31,7 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/index.html", "/api/auth/login/**", "/login/oauth2/code/**").permitAll()
+                        .requestMatchers("/", "/index.html", "/api/auth/login/**", "/login/oauth2/code/**", "/api/auth/refresh").permitAll()
                         .requestMatchers("/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
@@ -56,7 +57,7 @@ public class SecurityConfig {
                 // 로그아웃 설정
                 .logout(logout -> logout
                         .logoutUrl("/api/auth/logout")
-                        .logoutSuccessHandler((request, response, authentication) -> response.setStatus(HttpServletResponse.SC_OK))
+                        .logoutSuccessHandler(customLogoutSuccessHandler)
                 )
 
                 // CSRF, FormLogin 비활성화 (REST API 서버이므로)
@@ -80,7 +81,6 @@ public class SecurityConfig {
 
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder(){
-
         return new BCryptPasswordEncoder();
     }
 

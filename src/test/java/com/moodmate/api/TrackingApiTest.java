@@ -1,6 +1,6 @@
 package com.moodmate.api;
 
-import com.moodmate.common.JwtUtil;
+import com.moodmate.config.jwt.JwtTokenProvider;
 import com.moodmate.domain.diary.entity.Diary;
 import com.moodmate.domain.diary.entity.DiaryEmotion;
 import com.moodmate.domain.diary.repository.DiaryEmotionRepository;
@@ -37,7 +37,8 @@ public class TrackingApiTest {
     @Autowired EmotionRepository emotionRepository;
     @Autowired DiaryEmotionRepository diaryEmotionRepository;
 
-    @Autowired JwtUtil jwtTokenProvider; // JWT 발급 유틸
+    @Autowired
+    JwtTokenProvider jwtTokenProvider; // JWT 발급 유틸
 
     private String token;
 
@@ -54,7 +55,7 @@ public class TrackingApiTest {
         user = TestUtils.createUser(userRepository);
 
         // 실제 JWT 토큰 발급
-        token = TestUtils.createToken(jwtTokenProvider, user);
+        token = TestUtils.createAccessToken(jwtTokenProvider, user);
 
         // Emotion 생성
         Emotion joy = emotionRepository.save(new Emotion("기쁨"));
@@ -111,7 +112,7 @@ public class TrackingApiTest {
     @Test
     void 감정빈도_API가_JSON으로_응답() throws Exception {
         mockMvc.perform(get("/api/analytics/emotions/frequency")
-                        .cookie(new Cookie("jwt_token", token))
+                        .header("Authorization", "Bearer " + token)
                         .param("startDate", "2025-09-01")
                         .param("endDate", "2025-09-30"))
                 .andDo(print())
@@ -132,7 +133,7 @@ public class TrackingApiTest {
     @Test
     void 감정강도비율_API가_JSON으로_응답() throws Exception {
         mockMvc.perform(get("/api/analytics/emotions/ratio")
-                        .cookie(new Cookie("jwt_token", token))
+                        .header("Authorization", "Bearer " + token)
                         .param("startDate", "2025-09-01")
                         .param("endDate", "2025-09-05"))
                 .andDo(print())
@@ -145,7 +146,7 @@ public class TrackingApiTest {
     @Test
     void 감정_추세_API가_JSON으로_응답() throws Exception {
         mockMvc.perform(get("/api/analytics/emotions/trend")
-                        .cookie(new Cookie("jwt_token", token))
+                        .header("Authorization", "Bearer " + token)
                         .param("startDate", "2025-08-01")
                         .param("endDate", "2025-09-30")
                         .param("emotions", "슬픔"))
@@ -160,7 +161,7 @@ public class TrackingApiTest {
     @Test
     void 감정_추세_API_공백조회_응답() throws Exception {
         mockMvc.perform(get("/api/analytics/emotions/trend")
-                        .cookie(new Cookie("jwt_token", token))
+                        .header("Authorization", "Bearer " + token)
                         .param("startDate", "2025-08-01")
                         .param("endDate", "2025-09-30"))
                 .andDo(print())

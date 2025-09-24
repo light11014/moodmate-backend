@@ -1,17 +1,13 @@
 package com.moodmate.api;
 
-import com.moodmate.common.JwtUtil;
-import com.moodmate.domain.diary.entity.Diary;
-import com.moodmate.domain.diary.entity.DiaryEmotion;
+import com.moodmate.config.jwt.JwtTokenProvider;
 import com.moodmate.domain.emotion.Emotion;
 import com.moodmate.domain.emotion.EmotionRepository;
-import com.moodmate.domain.emotion.EmotionService;
-import com.moodmate.domain.emotion.dto.EmotionRequest;
-import com.moodmate.domain.emotion.dto.EmotionResponse;
 import com.moodmate.domain.user.UserRepository;
 import com.moodmate.domain.user.entity.User;
-import jakarta.servlet.http.Cookie;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -19,12 +15,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDate;
-import java.util.List;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -41,7 +33,7 @@ public class EmotionApiTest {
     EmotionRepository emotionRepository;
 
     @Autowired
-    JwtUtil jwtTokenProvider; // JWT 발급 유틸
+    JwtTokenProvider jwtTokenProvider; // JWT 발급 유틸
 
     private String token;
 
@@ -56,13 +48,13 @@ public class EmotionApiTest {
         user = TestUtils.createUser(userRepository);
 
         // 실제 JWT 토큰 발급
-        token = TestUtils.createToken(jwtTokenProvider, user);
+        token = TestUtils.createAccessToken(jwtTokenProvider, user);
     }
 
     @Test
     public void 감정_등록_성공 () throws Exception{
         mockMvc.perform(post("/api/emotions")
-                        .cookie(new Cookie("jwt_token", token))
+                        .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"기쁨\"}"))
                 .andExpect(status().isOk())
@@ -77,7 +69,7 @@ public class EmotionApiTest {
 
         // when & then
         mockMvc.perform(post("/api/emotions")
-                        .cookie(new Cookie("jwt_token", token))
+                        .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"기쁨\"}"))
                 .andExpect(status().isBadRequest())
@@ -93,7 +85,7 @@ public class EmotionApiTest {
 
         // when & then
         mockMvc.perform(get("/api/emotions")
-                        .cookie(new Cookie("jwt_token", token)))
+                    .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(3));
     }

@@ -8,7 +8,6 @@ import com.moodmate.domain.user.ouath.CustomOauth2User;
 import com.moodmate.domain.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -21,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
-@Tag(name = "User-Controller", description = "회원 관련 API")
+@Tag(name = "회원 관리", description = "User API")
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
