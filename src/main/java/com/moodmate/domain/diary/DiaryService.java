@@ -63,11 +63,14 @@ public class DiaryService {
         LocalDate start = yearMonth.atDay(1);
         LocalDate end = yearMonth.atEndOfMonth();
 
+        // 해당 월의 일기 조회
         List<Diary> diaries = diaryRepository.findByUserIdAndDateBetween(userId, start, end);
 
+        // DTO로 변환
         return diaries.stream()
                 .map(diary -> new DiaryMonthSummaryResponse(
                         diary.getDate(),
+                        diary.getId(),   // diaryId 포함
                         diary.getDiaryEmotions().stream()
                                 .map(de -> new EmotionDto(
                                         de.getEmotion().getName(),

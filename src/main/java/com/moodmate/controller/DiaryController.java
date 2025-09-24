@@ -65,8 +65,12 @@ public class DiaryController {
     public ResponseEntity<List<DiaryMonthSummaryResponse>> getMonthlyDiaries(
             @RequestParam("date") String dateStr,
             @AuthenticationPrincipal CustomOauth2User userDetails) {
+
         YearMonth yearMonth = YearMonth.parse(dateStr);
-        List<DiaryMonthSummaryResponse> summaries = diaryService.getDiarySummariesByMonth(userDetails.getUser().getId(), yearMonth);
+        List<DiaryMonthSummaryResponse> summaries = diaryService.getDiarySummariesByMonth(
+                userDetails.getUser().getId(), yearMonth
+        );
+
         return ResponseEntity.ok(summaries);
     }
 

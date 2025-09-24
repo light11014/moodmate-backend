@@ -10,10 +10,12 @@ import java.util.List;
 public class DiaryResponse {
     @Schema(description = "일기 내용", example = "오늘은 날씨가 좋았다.")
     private final String content;
+    private Long diaryId;
 
     private final List<EmotionDto> emotions;
 
     public DiaryResponse(Diary diary) {
+        this.diaryId = diary.getId();
         this.content = diary.getContent();
         this.emotions = diary.getDiaryEmotions().stream()
                 .map(e -> new EmotionDto(e.getEmotion().getName(), e.getIntensity()))

@@ -16,7 +16,7 @@ public class OpenApiConfig {
         Info info = new Info()
                 .title("Moodmate API Document")
                 .version("v0.0.1")
-                .description("Moodmate API 명세서입니다.");
+                .description("Moodmate API");
         return new OpenAPI()
                 .components(new Components()
                         .addSecuritySchemes("bearer-key",

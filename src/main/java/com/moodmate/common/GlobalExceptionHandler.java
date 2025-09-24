@@ -51,4 +51,45 @@ public class GlobalExceptionHandler {
         body.put("error", message);
         return ResponseEntity.status(status).body(body);
     }
+
+    // GlobalExceptionHandler.java에 추가할 예외 처리 메서드들
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalState(IllegalStateException ex) {
+        // 일일 사용량 초과 예외는 429 상태 코드 반환
+        if (ex.getMessage().contains("일일 피드백 사용량")) {
+            return buildErrorResponse(ex.getMessage(), HttpStatus.TOO_MANY_REQUESTS);
+        }
+        return buildErrorResponse("상태 오류가 발생했습니다.", HttpStatus.BAD_REQUEST);
+    }
+
+    // WebClient 관련 예외 처리 (OpenAI API 호출 실패)
+    @ExceptionHandler(org.springframework.web.reactive.function.client.WebClientException.class)
+    public ResponseEntity<Map<String, String>> handleWebClientException(
+            org.springframework.web.reactive.function.client.WebClientException ex) {
+        return buildErrorResponse("외부 서비스 연결 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+                HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+    // 타임아웃 예외 처리
+    @ExceptionHandler(java.util.concurrent.TimeoutException.class)
+    public ResponseEntity<Map<String, String>> handleTimeout(java.util.concurrent.TimeoutException ex) {
+        return buildErrorResponse("요청 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.",
+                HttpStatus.REQUEST_TIMEOUT);
+    }
+
+    // WebClientResponseException 처리 (OpenAI API 응답 오류)
+    @ExceptionHandler(org.springframework.web.reactive.function.client.WebClientResponseException.class)
+    public ResponseEntity<Map<String, String>> handleWebClientResponseException(
+            org.springframework.web.reactive.function.client.WebClientResponseException ex) {
+
+        String message = switch (ex.getStatusCode().value()) {
+            case 401 -> "AI 서비스 인증 오류입니다.";
+            case 429 -> "AI 서비스 사용량을 초과했습니다. 잠시 후 다시 시도해주세요.";
+            case 500, 502, 503 -> "AI 서비스가 일시적으로 이용할 수 없습니다.";
+            default -> "AI 서비스 오류가 발생했습니다.";
+        };
+
+        return buildErrorResponse(message, HttpStatus.SERVICE_UNAVAILABLE);
+    }
 }

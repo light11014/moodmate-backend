@@ -61,3 +61,22 @@ springdoc:
     display-request-duration: true
   api-docs:
     resolve-schema-properties: false
+
+# Google Gemini API 설정 (새로 추가)
+gemini:
+  api:
+    key: "AIzaSyDfa0_slEaxOiv87hxy9_Wi_mnXcWy4IDc"  # 발급받은 API 키로 교체
+    model: "gemini-1.5-flash"        # 또는 gemini-1.5-pro
+    timeout: 30
+
+# 로깅 설정
+logging:
+  level:
+    com.moodmate.domain.feedback.service.GeminiService: INFO
+    # com.moodmate.domain.feedback.service.OpenAiService: INFO
+
+# application.properties 설정 (대안)
+# openai.api.key=${OPENAI_API_KEY:your-openai-api-key-here}
+# openai.api.model=gpt-3.5-turbo
+# openai.api.url=https://api.openai.com/v1/chat/completions
+# openai.api.timeout=30
