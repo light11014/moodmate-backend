@@ -53,6 +53,10 @@ public class User {
         diary.setUser(this);
     }
 
+    public void setRefreshToken(RefreshToken refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
     public void setUsername(String username) {
         this.username = username;
     }

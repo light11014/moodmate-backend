@@ -25,7 +25,7 @@ public class AuthDocController {
         return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
     }
 
-    @Operation(summary = "로그아웃", description = "로그아웃 요청을 처리합니다.")
+    @Operation(summary = "로그아웃", description = "로그아웃 요청을 처리합니다. 실제 요청 시 Spring Security OAuth2 Login이 처리합니다.")
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
         // Swagger 문서용 dummy 엔드포인트

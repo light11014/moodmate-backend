@@ -34,6 +34,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         String token = jwtTokenProvider.createRefreshToken(user.getId());
         refreshTokenService.saveRefreshToken(user, token);
 
+
         // 쿠키 생성
         Cookie cookie = new Cookie("mm-rt", token);
         cookie.setPath("/");

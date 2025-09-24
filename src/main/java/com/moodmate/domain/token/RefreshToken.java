@@ -24,6 +24,7 @@ public class RefreshToken {
     public RefreshToken(User user, String refreshToken) {
         this.user = user;
         this.refreshToken = refreshToken;
+        user.setRefreshToken(this);
     }
     public RefreshToken update(String newToken) {
         this.refreshToken = newToken;
