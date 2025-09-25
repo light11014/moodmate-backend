@@ -5,9 +5,9 @@ import com.moodmate.domain.user.dto.UserProfileRequest;
 import com.moodmate.domain.user.dto.UserProfileResponse;
 import com.moodmate.domain.user.entity.User;
 import com.moodmate.domain.user.ouath.CustomOauth2User;
+import com.moodmate.domain.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -20,12 +20,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
-@Tag(name = "User-Controller", description = "회원 관련 API")
+@Tag(name = "회원 관리", description = "User API")
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
-    private final UserRepository memberRepository;
+    private final UserRepository userRepository;
+    private final UserService userService;
 
     @GetMapping("/me")
     @Operation(summary = "회원 정보 조회",
@@ -61,7 +62,7 @@ public class UserController {
             @AuthenticationPrincipal CustomOauth2User customOauth2User) {
         User user = customOauth2User.getUser();
         user.setUsername(request.username()); // 닉네임 수정
-        memberRepository.save(user); // DB에 저장
+        userRepository.save(user); // DB에 저장
         return ResponseEntity.ok(new UserProfileResponse(user));
     }
 
@@ -78,10 +79,7 @@ public class UserController {
         User user = customOauth2User.getUser();
 
         // 사용자 삭제
-        memberRepository.delete(user);
-
-//        // JWT 토큰 만료 처리를 클라이언트에서 할 수 있으므로, 삭제만 처리
-////        return ResponseEntity.noContent().build();  // 204 No Content 응답
+        userRepository.delete(user);
 
         return ResponseEntity.ok(Map.of(
                 "message", "회원 탈퇴가 완료되었습니다."

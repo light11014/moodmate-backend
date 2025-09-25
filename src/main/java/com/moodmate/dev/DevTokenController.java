@@ -1,12 +1,11 @@
 package com.moodmate.dev;
 
-import com.moodmate.common.JwtUtil;
+import com.moodmate.config.jwt.JwtTokenProvider;
 import com.moodmate.domain.user.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
@@ -22,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class DevTokenController {
 
-    private final JwtUtil jwtProvider;
+    private final JwtTokenProvider jwtProvider;
     private final UserRepository userRepository;
 
     @GetMapping("/dev-token")
@@ -36,7 +35,7 @@ public class DevTokenController {
     )
     public ResponseEntity<String> getDevToken() {
         return userRepository.findByLoginId("moodmate001")
-                .map(user -> ResponseEntity.ok(jwtProvider.createToken(user.getId(), user.getEmail(), user.getRole())))
+                .map(user -> ResponseEntity.ok(jwtProvider.createRefreshToken(user.getId())))
                 .orElseGet(() -> ResponseEntity.badRequest().body("테스트 유저 없음"));
     }
 }

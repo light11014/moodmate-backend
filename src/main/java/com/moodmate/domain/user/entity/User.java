@@ -1,14 +1,18 @@
 package com.moodmate.domain.user.entity;
 
+import com.moodmate.domain.diary.entity.Diary;
+import com.moodmate.domain.token.RefreshToken;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "users")
@@ -37,8 +41,36 @@ public class User {
 
     private String pictureUrl;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Diary> diaries = new ArrayList<>();
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private RefreshToken refreshToken;
+
+    // 편의 메서드
+    public void addDiary(Diary diary) {
+        diaries.add(diary);
+        diary.setUser(this);
+    }
+
+    public void setRefreshToken(RefreshToken refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
     public void setUsername(String username) {
         this.username = username;
     }
 
+    public static User createOAuthUser(String loginId, String provider, String providerId,
+                                       Role role, String pictureUrl, String email) {
+        User user = new User();
+        user.loginId = loginId;
+        user.provider = provider;
+        user.providerId = providerId;
+        user.role = role;
+        user.pictureUrl = pictureUrl;
+        user.email = email;
+        user.username = null;
+        return user;
+    }
 }
