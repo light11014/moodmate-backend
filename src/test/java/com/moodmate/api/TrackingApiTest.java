@@ -68,7 +68,11 @@ public class TrackingApiTest {
 
         // Diary 생성 + DiaryEmotion 연결
         Diary diary1 = Diary.builder()
-                .content("오늘은 즐거운 하루였다")
+                .content("오늘 친구들과 카페에서 만났다. \n" +
+                        "정말 오랜만에 보는 얼굴들이라 너무 반가웠다. \n" +
+                        "맛있는 커피를 마시면서 이런저런 이야기를 나눴다.\n" +
+                        "학교 생활이나 취업 준비 이야기를 하면서 시간 가는 줄 몰랐다.\n" +
+                        "행복한 하루였다. 일기")
                 .date(LocalDate.of(2025, 9, 1))
                 .user(user)
                 .build();
@@ -77,7 +81,11 @@ public class TrackingApiTest {
         diary1.addDiaryEmotion(new DiaryEmotion(sad, 5));
 
         Diary diary2 = Diary.builder()
-                .content("오늘은 조금 힘들었다")
+                .content("오늘은 면접을 봤다. \n" +
+                        "너무 긴장돼서 떨렸다. \n" +
+                        "준비한 대로 말하지 못해서 아쉬웠다.\n" +
+                        "면접관들 앞에서 제대로 말을 못한 것 같아 불안하다.\n" +
+                        "결과가 걱정된다. 일기")
                 .date(LocalDate.of(2025, 9, 2))
                 .user(user)
                 .build();
@@ -104,7 +112,11 @@ public class TrackingApiTest {
         diary4.addDiaryEmotion(new DiaryEmotion(sad, 4));
 
         Diary diary5 = Diary.builder()
-                .content("또 다른 월요일")
+                .content("드디어 합격 통보를 받았다!\n" +
+                        "정말 기쁘고 감사하다.\n" +
+                        "부모님께 전화로 말씀드렸더니 너무 좋아하셨다.\n" +
+                        "친구들도 축하해줬다.\n" +
+                        "새로운 회사에서 열심히 일해야겠다. 일기")
                 .date(LocalDate.of(2025, 9, 8)) // 월요일
                 .user(user)
                 .build();
@@ -112,7 +124,11 @@ public class TrackingApiTest {
         diary5.addDiaryEmotion(new DiaryEmotion(angry, 2));
 
         Diary diary6 = Diary.builder()
-                .content("세 번째 월요일")
+                .content("첫 출근을 했다.\n" +
+                        "새로운 사람들을 만나서 조금 떨렸지만 다들 친절했다.\n" +
+                        "업무를 배우는 게 쉽지 않지만 재미있다.\n" +
+                        "점심시간에 동료들과 식사하면서 회사 분위기를 느꼈다.\n" +
+                        "앞으로가 기대된다. 일기")
                 .date(LocalDate.of(2025, 9, 15)) // 월요일
                 .user(user)
                 .build();
@@ -220,5 +236,21 @@ public class TrackingApiTest {
                 .andExpect(jsonPath("$.data[4].diaryCount").value(0))
                 .andExpect(jsonPath("$.data[4].emotionCount").value(0))
                 .andExpect(jsonPath("$.data[4].emotions", hasSize(0)));
+    }
+
+    @Test
+    void 자주_사용한_단어_조회_API() throws Exception {
+        mockMvc.perform(get("/api/analytics/words/frequency")
+                        .header("Authorization", "Bearer " + token)
+                        .param("startDate", "2025-09-01")
+                        .param("endDate", "2025-09-30")
+                        .param("limit", "20"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.meta.userId").value(user.getId()))
+                .andExpect(jsonPath("$.meta.diaryCount").value(4))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].word").exists())
+                .andExpect(jsonPath("$.data[0].count").exists());
     }
 }

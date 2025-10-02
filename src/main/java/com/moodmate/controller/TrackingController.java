@@ -5,6 +5,8 @@ import com.moodmate.domain.tracking.dayOfWeek.DayOfWeekEmotionResponse;
 import com.moodmate.domain.tracking.frequency.EmotionFrequencyResponse;
 import com.moodmate.domain.tracking.ratio.EmotionRatioResponse;
 import com.moodmate.domain.tracking.trend.EmotionTrendResponse;
+import com.moodmate.domain.tracking.word.WordAnalysisService;
+import com.moodmate.domain.tracking.word.dto.WordFrequencyResponse;
 import com.moodmate.domain.user.ouath.CustomOauth2User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -34,6 +36,7 @@ import java.util.List;
 public class TrackingController {
 
     private final TrackingService trackingService;
+    private final WordAnalysisService wordAnalysisService;
 
     @GetMapping("/emotions/frequency")
     @Operation(summary = "기간별 감정 빈도 조회",
@@ -140,6 +143,32 @@ public class TrackingController {
                 endDate
         );
 
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/words/frequency")
+    @Operation(
+            summary = "자주 사용한 단어 조회",
+            description = "지정된 기간 동안 일기에서 자주 사용한 단어를 빈도순으로 반환합니다.",
+            parameters = {
+                    @Parameter(name = "startDate", description = "조회 시작 날짜", required = true, example = "2025-09-01"),
+                    @Parameter(name = "endDate", description = "조회 종료 날짜", required = true, example = "2025-10-01"),
+                    @Parameter(description = "반환할 단어 개수 (기본값: 50)", example = "50")
+            },
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "조회 성공",
+                            content = @Content(array = @ArraySchema(schema = @Schema(implementation = WordFrequencyResponse.class)))),
+                    @ApiResponse(responseCode = "400", description = "잘못된 요청(잘못된 기간 설정 등)", content = @Content),
+                    @ApiResponse(responseCode = "401", description = "로그인하지 않은 사용자", content = @Content)
+            }
+    )
+    public ResponseEntity<WordFrequencyResponse> getFrequentWords(
+            @AuthenticationPrincipal CustomOauth2User userDetails,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "50") int limit
+    ) {
+        WordFrequencyResponse response = wordAnalysisService.getFrequentWords(userDetails.getUser().getId(), startDate, endDate, limit);
         return ResponseEntity.ok(response);
     }
 }

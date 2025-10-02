@@ -1,6 +1,5 @@
 package com.moodmate.domain.tracking.frequency;
 
-import com.moodmate.domain.tracking.TrackingMetaBase;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
@@ -16,4 +15,4 @@ public record FrequencyMeta(
     @Schema(description = "데이터 수", example = "2")
     long totalRecords,
 
-    LocalDateTime generatedAt)  implements TrackingMetaBase {}
+    LocalDateTime generatedAt){}
