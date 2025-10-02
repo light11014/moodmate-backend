@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
 public record WeekDto(
-        @Schema(description = "요일", example = "MON")
+        @Schema(description = "요일", example = "MONDAY")
         String dayOfWeek,
 
         @Schema(description = "요일(한글)", example = "월요일")
