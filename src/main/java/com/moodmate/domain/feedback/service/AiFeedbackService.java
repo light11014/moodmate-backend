@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -35,8 +36,8 @@ public class AiFeedbackService {
     private static final int DAILY_FEEDBACK_LIMIT = 2;
 
     /**
-     피드백 생성 (수정된 메소드)
-     diaryId를 별도 파라미터로 받음
+     * 피드백 생성 (수정된 메소드)
+     * diaryId를 별도 파라미터로 받음
      */
     public FeedbackResponse createFeedback(Long userId, Long diaryId, FeedbackStyleRequest request) throws AccessDeniedException {
         // 사용자 조회
@@ -51,10 +52,11 @@ public class AiFeedbackService {
             throw new AccessDeniedException("해당 일기에 대한 권한이 없습니다.");
         }
 
-        // 이미 해당 일기에 대한 피드백이 있는지 확인
-        if (aiFeedbackRepository.findByDiaryId(diaryId).isPresent()) {
-            throw new IllegalArgumentException("해당 일기에 대한 피드백이 이미 존재합니다.");
-        }
+        // 기존 피드백이 있다면 삭제 (덮어쓰기)
+        aiFeedbackRepository.findLatestByDiaryId(diaryId).ifPresent(existingFeedback -> {
+            log.info("기존 피드백 삭제 - 일기 ID: {}, 피드백 ID: {}", diaryId, existingFeedback.getId());
+            aiFeedbackRepository.delete(existingFeedback);
+        });
 
         // 일일 사용량 확인 및 업데이트
         checkAndUpdateDailyUsage(userId);
@@ -70,6 +72,7 @@ public class AiFeedbackService {
                 .summary(summary)
                 .response(response)
                 .feedbackStyle(request.feedbackStyle())
+                .requestedAt(LocalDateTime.now())
                 .build();
 
         aiFeedbackRepository.save(feedback);
@@ -88,8 +91,8 @@ public class AiFeedbackService {
             throw new AccessDeniedException("해당 일기에 대한 권한이 없습니다.");
         }
 
-        // 피드백 조회
-        AiFeedback feedback = aiFeedbackRepository.findByDiaryId(diaryId)
+        // 가장 최근 피드백 조회
+        AiFeedback feedback = aiFeedbackRepository.findLatestByDiaryId(diaryId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 일기에 대한 피드백이 없습니다."));
 
         return new FeedbackResponse(feedback);
@@ -136,8 +139,6 @@ public class AiFeedbackService {
         try {
             // AI를 통한 종합 분석
             String periodSummary = geminiService.generatePeriodSummary(combinedSummaries, startDate, endDate);
-            String emotionalPattern = geminiService.analyzeEmotionalPattern(combinedSummaries);
-            String growthPattern = geminiService.analyzeGrowthPattern(combinedSummaries);
             String recommendations = geminiService.generateRecommendations(combinedSummaries);
 
             log.info("기간별 분석 완료 - 사용자: {}, 분석된 일기 수: {}", userId, feedbacks.size());
@@ -147,8 +148,6 @@ public class AiFeedbackService {
                     endDate,
                     feedbacks.size(),
                     periodSummary,
-                    emotionalPattern,
-                    growthPattern,
                     recommendations
             );
 
@@ -171,7 +170,7 @@ public class AiFeedbackService {
     }
 
     /**
-     피드백 삭제
+     * 피드백 삭제
      */
     public void deleteFeedback(Long userId, Long diaryId) throws AccessDeniedException {
         // 일기 조회 및 권한 확인
@@ -182,8 +181,8 @@ public class AiFeedbackService {
             throw new AccessDeniedException("해당 일기에 대한 권한이 없습니다.");
         }
 
-        // 피드백 조회
-        AiFeedback feedback = aiFeedbackRepository.findByDiaryId(diaryId)
+        // 가장 최근 피드백 조회
+        AiFeedback feedback = aiFeedbackRepository.findLatestByDiaryId(diaryId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 일기에 대한 피드백이 없습니다."));
 
         // 피드백 소유자 확인 (추가 보안)
@@ -194,9 +193,6 @@ public class AiFeedbackService {
         // 피드백 삭제
         aiFeedbackRepository.delete(feedback);
         log.info("피드백 삭제 완료 - 사용자: {}, 일기: {}, 피드백: {}", userId, diaryId, feedback.getId());
-
-        // 일일 사용량 감소 (선택사항)
-        decrementDailyUsage(userId, feedback.getCreated_at().toLocalDate());
     }
 
     private void checkAndUpdateDailyUsage(Long userId) {
@@ -225,24 +221,6 @@ public class AiFeedbackService {
             usage.incrementUsage();
             dailyUsageRepository.save(usage);
             log.info("일일 사용량 업데이트 - 사용자: {}, 현재 사용량: {}", userId, usage.getUsageCount());
-        }
-    }
-
-    /**
-     피드백 삭제 시 일일 사용량 감소
-     */
-    private void decrementDailyUsage(Long userId, LocalDate feedbackDate) {
-        // 오늘 생성된 피드백인 경우에만 사용량 감소
-        if (feedbackDate.equals(LocalDate.now())) {
-            DailyFeedbackUsage usage = dailyUsageRepository.findByUserIdAndUsageDate(userId, feedbackDate)
-                    .orElse(null);
-
-            if (usage != null && usage.getUsageCount() > 0) {
-                // 사용량 감소를 위한 새로운 메소드 필요 (DailyFeedbackUsage 엔티티에 추가)
-                usage.decrementUsage();
-                dailyUsageRepository.save(usage);
-                log.info("일일 사용량 감소 - 사용자: {}, 현재 사용량: {}", userId, usage.getUsageCount());
-            }
         }
     }
 }

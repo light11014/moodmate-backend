@@ -31,7 +31,7 @@ public class FeedbackController {
 
     @PostMapping("/diaries/{diaryId}/feedback")
     @Operation(summary = "AI 피드백 생성",
-            description = "일기에 대한 AI 피드백을 생성합니다. 하루 최대 2회까지 이용 가능합니다.",
+            description = "일기에 대한 AI 피드백을 생성합니다. 하루 최대 2회까지 이용 가능합니다. 동일한 일기에 대해 재요청 시 기존 피드백이 삭제되고 새로운 피드백으로 대체됩니다.",
             security = @SecurityRequirement(name = "bearer-key"),
             parameters = {
                     @Parameter(name = "diaryId", description = "일기 ID", required = true, example = "1")

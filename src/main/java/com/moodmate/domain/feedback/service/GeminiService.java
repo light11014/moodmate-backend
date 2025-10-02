@@ -14,6 +14,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -96,48 +97,6 @@ public class GeminiService {
         return callGeminiAPI(prompt);
     }
 
-    /**
-     감정 패턴 분석
-     */
-    public String analyzeEmotionalPattern(String combinedSummaries) {
-        String prompt = """
-                다음 일기 요약들을 바탕으로 감정적 패턴을 자세히 분석해주세요.
-                            
-                일기 요약들:
-                %s
-                            
-                분석 요청사항:
-                - 자주 나타나는 감정들과 그 특징 (기쁨, 슬픔, 불안, 만족감 등)
-                - 시간에 따른 감정 변화의 패턴이나 트렌드
-                - 특정 상황이나 활동과 연관된 감정 반응
-                - 감정 조절이나 회복의 패턴
-                - 4-5문장으로 구체적이고 통찰력 있게 작성
-                """.formatted(combinedSummaries);
-
-        return callGeminiAPI(prompt);
-    }
-
-    /**
-     성장과 변화 분석
-     */
-    public String analyzeGrowthPattern(String combinedSummaries) {
-        String prompt = """
-                다음 일기 요약들을 통해 사용자의 성장과 변화를 깊이 있게 분석해주세요.
-                            
-                일기 요약들:
-                %s
-                            
-                분석 요청사항:
-                - 시간에 따른 긍정적인 변화나 개선점
-                - 어려운 상황에 대한 대처 방식의 발전
-                - 새로운 경험이나 도전에 대한 태도 변화
-                - 자기 인식이나 성찰의 깊이 변화
-                - 관계나 소통 방식의 개선
-                - 4-5문장으로 격려하고 응원하는 톤으로 작성
-                """.formatted(combinedSummaries);
-
-        return callGeminiAPI(prompt);
-    }
 
     /**
      향후 권장사항 생성
@@ -155,7 +114,7 @@ public class GeminiService {
                 - 스트레스나 어려운 감정 상황에 더 잘 대처하는 방법
                 - 성장과 발전을 위한 구체적인 실천 방안
                 - 일상에서 쉽게 적용할 수 있는 현실적인 제안
-                - 4-5문장으로 격려와 함께 구체적으로 작성
+                - 2문장으로 무조건 간단하게 작성
                 """.formatted(combinedSummaries);
 
         return callGeminiAPI(prompt);
@@ -175,17 +134,6 @@ public class GeminiService {
                     .uri("/v1beta/models/" + model + ":generateContent?key=" + geminiApiKey)
                     .bodyValue(requestBody)
                     .retrieve()
-                    .onStatus(
-                            status -> status.is4xxClientError() || status.is5xxServerError(),
-                            clientResponse -> {
-                                log.error("Gemini API HTTP 오류: {} {}",
-                                        clientResponse.statusCode().value(),
-                                        clientResponse.statusCode());
-                                return clientResponse.bodyToMono(String.class)
-                                        .doOnNext(body -> log.error("오류 응답: {}", body))
-                                        .then(Mono.error(new RuntimeException("Gemini API 호출 실패: " + clientResponse.statusCode())));
-                            }
-                    )
                     .bodyToMono(Map.class)
                     .timeout(Duration.ofSeconds(timeoutSeconds))
                     .doOnError(error -> log.error("Gemini API 호출 중 오류: {}", error.getMessage()))
@@ -203,6 +151,7 @@ public class GeminiService {
         }
     }
 
+
     /**
      Gemini API 요청 본문 생성
      */
@@ -217,7 +166,7 @@ public class GeminiService {
                         "temperature", 0.7,
                         "topK", 40,
                         "topP", 0.95,
-                        "maxOutputTokens", 400,
+                        "maxOutputTokens", 4096,
                         "stopSequences", List.of()
                 ),
                 "safetySettings", List.of(

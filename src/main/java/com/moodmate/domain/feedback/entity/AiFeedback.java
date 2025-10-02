@@ -8,7 +8,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 
+// AiFeedback.java
 @Entity
 @Getter
 @NoArgsConstructor
@@ -36,12 +38,16 @@ public class AiFeedback extends BaseTimeEntity {
     @Column(name = "feedback_style", nullable = false)
     private FeedbackStyle feedbackStyle;
 
+    @Column(name = "requested_at", nullable = false)
+    private LocalDateTime requestedAt;
+
     @Builder
-    public AiFeedback(User user, Diary diary, String summary, String response, FeedbackStyle feedbackStyle) {
+    public AiFeedback(User user, Diary diary, String summary, String response, FeedbackStyle feedbackStyle, LocalDateTime requestedAt) {
         this.user = user;
         this.diary = diary;
         this.summary = summary;
         this.response = response;
         this.feedbackStyle = feedbackStyle;
+        this.requestedAt = requestedAt != null ? requestedAt : LocalDateTime.now();
     }
 }

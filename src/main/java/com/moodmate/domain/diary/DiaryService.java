@@ -59,18 +59,16 @@ public class DiaryService {
         return new DiaryResponse(diary);
     }
 
-    public List<DiaryMonthSummaryResponse> getDiarySummariesByMonth(Long userId, YearMonth yearMonth) {
-        LocalDate start = yearMonth.atDay(1);
-        LocalDate end = yearMonth.atEndOfMonth();
+    /**
+     * 기간별 일기 조회 - 요약 형식 (날짜, ID, 감정만)
+     */
+    public List<DiaryMonthSummaryResponse> getDiariesByPeriodSummary(Long userId, LocalDate startDate, LocalDate endDate) {
+        List<Diary> diaries = diaryRepository.findByUserIdAndDateBetween(userId, startDate, endDate);
 
-        // 해당 월의 일기 조회
-        List<Diary> diaries = diaryRepository.findByUserIdAndDateBetween(userId, start, end);
-
-        // DTO로 변환
         return diaries.stream()
                 .map(diary -> new DiaryMonthSummaryResponse(
                         diary.getDate(),
-                        diary.getId(),   // diaryId 포함
+                        diary.getId(),
                         diary.getDiaryEmotions().stream()
                                 .map(de -> new EmotionDto(
                                         de.getEmotion().getName(),
@@ -80,7 +78,26 @@ public class DiaryService {
                 .toList();
     }
 
+    /**
+     * 기간별 일기 조회 - 전체 내용 포함
+     */
+    public List<DiaryResponse> getDiariesByPeriodFull(Long userId, LocalDate startDate, LocalDate endDate) {
+        List<Diary> diaries = diaryRepository.findByUserIdAndDateBetween(userId, startDate, endDate);
 
+        return diaries.stream()
+                .map(DiaryResponse::new)
+                .toList();
+    }
+
+    /**
+     * @deprecated 월별 조회는 기간별 조회로 대체되었습니다. getDiariesByPeriodSummary 사용을 권장합니다.
+     */
+    @Deprecated
+    public List<DiaryMonthSummaryResponse> getDiarySummariesByMonth(Long userId, YearMonth yearMonth) {
+        LocalDate start = yearMonth.atDay(1);
+        LocalDate end = yearMonth.atEndOfMonth();
+        return getDiariesByPeriodSummary(userId, start, end);
+    }
 
     public void updateDiary(Long diaryId, DiaryRequest dto, Long userId) throws AccessDeniedException {
         // 일기 조회
@@ -117,5 +134,4 @@ public class DiaryService {
 
         diaryRepository.delete(diary); // DiaryEmotion도 함께 삭제됨
     }
-
 }

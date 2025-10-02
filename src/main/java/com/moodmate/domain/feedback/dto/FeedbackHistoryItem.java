@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Slf4j
-@JsonInclude(JsonInclude.Include.ALWAYS) // null 값도 포함하여 JSON에 표시
+@JsonInclude(JsonInclude.Include.ALWAYS)
 public class FeedbackHistoryItem {
     @Schema(description = "피드백 ID")
     private final Long feedbackId;
@@ -32,7 +32,10 @@ public class FeedbackHistoryItem {
     @Schema(description = "피드백 스타일")
     private final FeedbackStyle feedbackStyle;
 
-    @Schema(description = "피드백 생성 시간")
+    @Schema(description = "피드백 요청 시간")
+    private final LocalDateTime requestedAt;
+
+    @Schema(description = "피드백 저장 시간")
     private final LocalDateTime createdAt;
 
     public FeedbackHistoryItem(AiFeedback feedback) {
@@ -42,9 +45,9 @@ public class FeedbackHistoryItem {
         this.summary = feedback.getSummary();
         this.response = feedback.getResponse();
         this.feedbackStyle = feedback.getFeedbackStyle();
+        this.requestedAt = feedback.getRequestedAt();
         this.createdAt = feedback.getCreated_at();
 
-        // 디버그 로그 추가
         log.debug("FeedbackHistoryItem 생성 - ID: {}, Summary: {}, Response: {}",
                 feedback.getId(),
                 feedback.getSummary() != null ? "존재" : "null",
