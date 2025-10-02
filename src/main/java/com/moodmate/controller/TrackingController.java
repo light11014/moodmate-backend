@@ -1,9 +1,10 @@
 package com.moodmate.controller;
 
 import com.moodmate.domain.tracking.TrackingService;
-import com.moodmate.domain.tracking.dto.frequency.EmotionFrequencyResponse;
-import com.moodmate.domain.tracking.dto.ratio.EmotionRatioResponse;
-import com.moodmate.domain.tracking.dto.trend.EmotionTrendResponse;
+import com.moodmate.domain.tracking.dayOfWeek.DayOfWeekEmotionResponse;
+import com.moodmate.domain.tracking.frequency.EmotionFrequencyResponse;
+import com.moodmate.domain.tracking.ratio.EmotionRatioResponse;
+import com.moodmate.domain.tracking.trend.EmotionTrendResponse;
 import com.moodmate.domain.user.ouath.CustomOauth2User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -108,6 +109,29 @@ public class TrackingController {
                 startDate,
                 endDate,
                 emotionList
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/emotions/day-of-week")
+    @Operation(
+            summary = "요일별 감정 통계 조회",
+            description = "지정된 기간 동안 요일별로 감정 데이터를 분석하여 통계를 제공합니다.",
+            parameters = {
+                    @Parameter(name = "startDate", description = "조회 시작 날짜", required = true, example = "2025-09-01"),
+                    @Parameter(name = "endDate", description = "조회 종료 날짜", required = true, example = "2025-10-01"),
+            }
+    )
+    public ResponseEntity<DayOfWeekEmotionResponse> getDayOfWeekEmotions(
+            @AuthenticationPrincipal CustomOauth2User userDetails,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    ) {
+        DayOfWeekEmotionResponse response = trackingService.getEmotionsByDayOfWeek(
+                userDetails.getUser().getId(),
+                startDate,
+                endDate
         );
 
         return ResponseEntity.ok(response);

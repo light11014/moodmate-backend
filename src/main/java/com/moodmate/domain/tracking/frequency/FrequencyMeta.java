@@ -1,6 +1,6 @@
-package com.moodmate.domain.tracking.dto.frequency;
+package com.moodmate.domain.tracking.frequency;
 
-import com.moodmate.domain.tracking.dto.TrackingMetaBase;
+import com.moodmate.domain.tracking.TrackingMetaBase;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;

@@ -1,4 +1,4 @@
-package com.moodmate.domain.tracking.dto.trend;
+package com.moodmate.domain.tracking.trend;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
