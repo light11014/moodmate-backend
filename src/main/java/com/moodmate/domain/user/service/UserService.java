@@ -17,15 +17,19 @@ public class UserService {
         String loginId = provider + "_" + userInfo.getProviderId();
 
         return userRepository.findByLoginId(loginId)
-                .orElseGet(() -> userRepository.save(User.builder()
-                        .loginId(loginId)
-                        .provider(provider)
-                        .providerId(userInfo.getProviderId())
-                        .role(Role.USER)
-                        .pictureUrl(userInfo.getPicture())
-                        .email(userInfo.getEmail())
-                        .username(null)
-                        .build()));
+                .orElseGet(() -> userRepository.save(User.createOAuthUser(
+                        loginId,
+                        provider,
+                        userInfo.getProviderId(),
+                        Role.USER,
+                        userInfo.getPicture(),
+                        userInfo.getEmail()
+                )));
+    }
+
+    public User findById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("unexpected User"));
     }
 }
 

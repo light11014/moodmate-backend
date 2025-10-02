@@ -11,6 +11,7 @@ import com.moodmate.domain.emotion.Emotion;
 import com.moodmate.domain.user.entity.User;
 import com.moodmate.domain.emotion.EmotionRepository;
 import com.moodmate.domain.user.UserRepository;
+import com.moodmate.domain.user.service.UserService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +49,7 @@ public class DiaryService {
         }
 
         // 저장 (Cascade로 DiaryEmotion까지 저장됨)
+        user.addDiary(diary);
         diaryRepository.save(diary);
 
         return diary.getId();

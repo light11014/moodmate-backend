@@ -1,6 +1,6 @@
 package com.moodmate.api;
 
-import com.moodmate.common.JwtUtil;
+import com.moodmate.config.jwt.JwtTokenProvider;
 import com.moodmate.domain.diary.entity.Diary;
 import com.moodmate.domain.diary.entity.DiaryEmotion;
 import com.moodmate.domain.diary.repository.DiaryEmotionRepository;
@@ -8,7 +8,6 @@ import com.moodmate.domain.diary.repository.DiaryRepository;
 import com.moodmate.domain.emotion.Emotion;
 import com.moodmate.domain.emotion.EmotionRepository;
 import com.moodmate.domain.user.UserRepository;
-import com.moodmate.domain.user.entity.Role;
 import com.moodmate.domain.user.entity.User;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,11 +19,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,7 +29,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class TrackingApiIntegrationTest {
+public class TrackingApiTest {
 
     @Autowired MockMvc mockMvc;
     @Autowired UserRepository userRepository;
@@ -40,7 +37,8 @@ public class TrackingApiIntegrationTest {
     @Autowired EmotionRepository emotionRepository;
     @Autowired DiaryEmotionRepository diaryEmotionRepository;
 
-    @Autowired JwtUtil jwtTokenProvider; // JWT 발급 유틸
+    @Autowired
+    JwtTokenProvider jwtTokenProvider; // JWT 발급 유틸
 
     private String token;
 
@@ -57,7 +55,7 @@ public class TrackingApiIntegrationTest {
         user = TestUtils.createUser(userRepository);
 
         // 실제 JWT 토큰 발급
-        token = TestUtils.createToken(jwtTokenProvider, user);
+        token = TestUtils.createAccessToken(jwtTokenProvider, user);
 
         // Emotion 생성
         Emotion joy = emotionRepository.save(new Emotion("기쁨"));
@@ -114,7 +112,7 @@ public class TrackingApiIntegrationTest {
     @Test
     void 감정빈도_API가_JSON으로_응답() throws Exception {
         mockMvc.perform(get("/api/analytics/emotions/frequency")
-                        .cookie(new Cookie("jwt_token", token))
+                        .header("Authorization", "Bearer " + token)
                         .param("startDate", "2025-09-01")
                         .param("endDate", "2025-09-30"))
                 .andDo(print())
@@ -135,7 +133,7 @@ public class TrackingApiIntegrationTest {
     @Test
     void 감정강도비율_API가_JSON으로_응답() throws Exception {
         mockMvc.perform(get("/api/analytics/emotions/ratio")
-                        .cookie(new Cookie("jwt_token", token))
+                        .header("Authorization", "Bearer " + token)
                         .param("startDate", "2025-09-01")
                         .param("endDate", "2025-09-05"))
                 .andDo(print())
@@ -148,7 +146,7 @@ public class TrackingApiIntegrationTest {
     @Test
     void 감정_추세_API가_JSON으로_응답() throws Exception {
         mockMvc.perform(get("/api/analytics/emotions/trend")
-                        .cookie(new Cookie("jwt_token", token))
+                        .header("Authorization", "Bearer " + token)
                         .param("startDate", "2025-08-01")
                         .param("endDate", "2025-09-30")
                         .param("emotions", "슬픔"))
@@ -163,7 +161,7 @@ public class TrackingApiIntegrationTest {
     @Test
     void 감정_추세_API_공백조회_응답() throws Exception {
         mockMvc.perform(get("/api/analytics/emotions/trend")
-                        .cookie(new Cookie("jwt_token", token))
+                        .header("Authorization", "Bearer " + token)
                         .param("startDate", "2025-08-01")
                         .param("endDate", "2025-09-30"))
                 .andDo(print())

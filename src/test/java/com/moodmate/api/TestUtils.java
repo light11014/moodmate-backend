@@ -1,6 +1,8 @@
 package com.moodmate.api;
 
-import com.moodmate.common.JwtUtil;
+import com.moodmate.config.jwt.JwtTokenProvider;
+import com.moodmate.domain.token.RefreshToken;
+import com.moodmate.domain.token.RefreshTokenRepository;
 import com.moodmate.domain.user.UserRepository;
 import com.moodmate.domain.user.entity.Role;
 import com.moodmate.domain.user.entity.User;
@@ -8,22 +10,22 @@ import com.moodmate.domain.user.entity.User;
 public class TestUtils {
 
     public static User createUser(UserRepository userRepository) {
-        return userRepository.save(User.builder()
-                .username("테스트유저")
-                .role(Role.USER)
-                .loginId("google_123")
-                .provider("google")
-                .providerId("123")
-                .email("test123@example.com")
-                .pictureUrl("http://example.com/img.png")
-                .build());
+        return userRepository.save(User.createOAuthUser(
+                "google_123",
+                "google",
+                "123",
+                Role.USER,
+                null,
+                "test123@example.com"));
     }
 
-    public static String createToken(JwtUtil provider, User user) {
-        return provider.createToken(
-                user.getId(),
-                user.getEmail(),
-                Role.USER
-        );
+    public static String createRefreshToken(JwtTokenProvider provider, User user, RefreshTokenRepository refreshTokenRepository) {
+        String token = provider.createRefreshToken(user.getId());
+        refreshTokenRepository.save(new RefreshToken(user, token));
+        return token;
+    }
+
+    public static String createAccessToken(JwtTokenProvider provider, User user) {
+        return provider.createAccessToken(user);
     }
 }

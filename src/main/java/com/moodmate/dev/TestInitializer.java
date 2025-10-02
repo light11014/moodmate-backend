@@ -22,14 +22,15 @@ public class TestInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         // --- test User 생성 ---
-        User user = User.builder()
-                .loginId("moodmate001")
-                .provider("moodmate")
-                .providerId("001")
-                .role(Role.USER)
-                .email("test@example.com")
-                .username("test")
-                .build();
+        User user = User.createOAuthUser(
+                "moodmate001",
+                "moodmate",
+                "001",
+                Role.USER,
+                "test@example.com",
+                "test"
+        );
+
         userRepository.findByEmail("test@example.com")
                 .orElseGet(() -> userRepository.save(user));
 
