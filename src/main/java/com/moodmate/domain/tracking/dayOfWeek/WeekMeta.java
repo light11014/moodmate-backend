@@ -1,6 +1,5 @@
 package com.moodmate.domain.tracking.dayOfWeek;
 
-import com.moodmate.domain.tracking.TrackingMetaBase;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
@@ -19,4 +18,4 @@ public record WeekMeta(
         @Schema(description = "조회된 일기 수", example = "50")
         long totalDiaryCount,
 
-        LocalDateTime generatedAt)  implements TrackingMetaBase {}
+        LocalDateTime generatedAt) {}
