@@ -9,9 +9,7 @@ public record DayOfWeekEmotionResponse(
         @Schema(description = "요일별 감정 조회 메타데이터")
         WeekMeta meta,
 
-        @Schema(description = "요일별 감정 데이터",
-                example = ""
-        )
+        @Schema(description = "요일별 감정 데이터(월 - 일)")
         List<WeekDto> data
 ) {
 }

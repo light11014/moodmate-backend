@@ -117,10 +117,16 @@ public class TrackingController {
     @GetMapping("/emotions/day-of-week")
     @Operation(
             summary = "요일별 감정 통계 조회",
-            description = "지정된 기간 동안 요일별로 감정 데이터를 분석하여 통계를 제공합니다.",
+            description = "지정된 기간 동안 요일별로 감정 데이터를 분석하여 통계를 제공합니다. 월-일 순이며, 조회할 일기가 없는 요일도 정보가 제공됩니다.",
             parameters = {
                     @Parameter(name = "startDate", description = "조회 시작 날짜", required = true, example = "2025-09-01"),
                     @Parameter(name = "endDate", description = "조회 종료 날짜", required = true, example = "2025-10-01"),
+            },
+            responses = {
+                @ApiResponse(responseCode = "200", description = "조회 성공",
+                        content = @Content(array = @ArraySchema(schema = @Schema(implementation = DayOfWeekEmotionResponse.class)))),
+                @ApiResponse(responseCode = "400", description = "잘못된 요청(잘못된 기간 설정 등)", content = @Content),
+                @ApiResponse(responseCode = "401", description = "로그인하지 않은 사용자", content = @Content)
             }
     )
     public ResponseEntity<DayOfWeekEmotionResponse> getDayOfWeekEmotions(
