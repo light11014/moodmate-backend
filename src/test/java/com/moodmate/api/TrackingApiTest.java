@@ -103,10 +103,27 @@ public class TrackingApiTest {
         diary4.addDiaryEmotion(new DiaryEmotion(surprised, 4));
         diary4.addDiaryEmotion(new DiaryEmotion(sad, 4));
 
+        Diary diary5 = Diary.builder()
+                .content("또 다른 월요일")
+                .date(LocalDate.of(2025, 9, 8)) // 월요일
+                .user(user)
+                .build();
+        diary5.addDiaryEmotion(new DiaryEmotion(joy, 3));
+        diary5.addDiaryEmotion(new DiaryEmotion(angry, 2));
+
+        Diary diary6 = Diary.builder()
+                .content("세 번째 월요일")
+                .date(LocalDate.of(2025, 9, 15)) // 월요일
+                .user(user)
+                .build();
+        diary6.addDiaryEmotion(new DiaryEmotion(joy, 4));
+
         diaryRepository.save(diary1);
         diaryRepository.save(diary2);
         diaryRepository.save(diary3);
         diaryRepository.save(diary4);
+        diaryRepository.save(diary5);
+        diaryRepository.save(diary6);
     }
 
     @Test
@@ -117,8 +134,8 @@ public class TrackingApiTest {
                         .param("endDate", "2025-09-30"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.meta.totalRecords").value(3))
-                .andExpect(jsonPath("$.data[?(@.emotion == '기쁨')].count").value(1))
+                .andExpect(jsonPath("$.meta.totalRecords").value(4))
+                .andExpect(jsonPath("$.data[?(@.emotion == '기쁨')].count").value(3))
                 .andExpect(jsonPath("$.data[?(@.emotion == '슬픔')].count").value(2));
     }
 
@@ -169,5 +186,39 @@ public class TrackingApiTest {
                 .andExpect(jsonPath("$.meta.selectedEmotions", hasSize(6)))
                 .andExpect(jsonPath("$.data[?(@.emotion == '슬픔')].timeline[0].date").value("2025-08-01"))
                 .andExpect(jsonPath("$.data[?(@.emotion == '슬픔')].timeline[0].intensity").value(4));
+    }
+
+    @Test
+    void 요일별_감정_조회_API가_JSON으로_응답() throws Exception {
+        mockMvc.perform(get("/api/analytics/emotions/day-of-week")
+                        .header("Authorization", "Bearer " + token)
+                        .param("startDate", "2025-09-01")
+                        .param("endDate", "2025-09-30"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                // 메타데이터 검증
+                .andExpect(jsonPath("$.meta.userId").value(user.getId()))
+                .andExpect(jsonPath("$.meta.startDate").value("2025-09-01"))
+                .andExpect(jsonPath("$.meta.endDate").value("2025-09-30"))
+                .andExpect(jsonPath("$.meta.totalRecords").value(7))
+                .andExpect(jsonPath("$.meta.totalDiaryCount").value(4))
+                // 월요일 검증
+                .andExpect(jsonPath("$.data[0].dayOfWeek").value("MONDAY"))
+                .andExpect(jsonPath("$.data[0].dayOfWeekKo").value("월요일"))
+                .andExpect(jsonPath("$.data[0].diaryCount").value(3))
+                .andExpect(jsonPath("$.data[0].emotionCount").value(3))
+                .andExpect(jsonPath("$.data[0].emotions", hasSize(3)))
+                // 화요일 검증
+                .andExpect(jsonPath("$.data[1].dayOfWeek").value("TUESDAY"))
+                .andExpect(jsonPath("$.data[1].dayOfWeekKo").value("화요일"))
+                .andExpect(jsonPath("$.data[1].diaryCount").value(1))
+                .andExpect(jsonPath("$.data[1].emotionCount").value(2))
+                .andExpect(jsonPath("$.data[1].emotions", hasSize(2)))
+                // 금요일 검증
+                .andExpect(jsonPath("$.data[4].dayOfWeek").value("FRIDAY"))
+                .andExpect(jsonPath("$.data[4].dayOfWeekKo").value("금요일"))
+                .andExpect(jsonPath("$.data[4].diaryCount").value(0))
+                .andExpect(jsonPath("$.data[4].emotionCount").value(0))
+                .andExpect(jsonPath("$.data[4].emotions", hasSize(0)));
     }
 }

@@ -1,4 +1,4 @@
-package com.moodmate.domain.tracking.dto;
+package com.moodmate.domain.tracking;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
