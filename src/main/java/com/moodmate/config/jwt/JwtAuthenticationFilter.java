@@ -5,6 +5,8 @@ import com.moodmate.domain.token.TokenType;
 import com.moodmate.domain.user.entity.User;
 import com.moodmate.domain.user.ouath.CustomOauth2User;
 import com.moodmate.domain.user.service.UserService;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,25 +37,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
         String token = getAccessToken(authHeader);
 
+        try {
+            if (token != null) {
+                jwtTokenProvider.validateToken(token, TokenType.ACCESS);
 
-        if (token != null && jwtTokenProvider.validateToken(token, TokenType.ACCESS)) {
-            Long userId = jwtTokenProvider.getUserId(token);
+                Long userId = jwtTokenProvider.getUserId(token);
 
-            // DB에서 사용자 조회
-            User user = userService.findById(userId);
+                // DB에서 사용자 조회
+                User user = userService.findById(userId);
 
-            CustomOauth2User oAuthUser = new CustomOauth2User(user, null);
+                CustomOauth2User oAuthUser = new CustomOauth2User(user, null);
 
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(oAuthUser, null, oAuthUser.getAuthorities());
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(oAuthUser, null, oAuthUser.getAuthorities());
 
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-            // SecurityContext에 인증 정보 저장
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                // SecurityContext에 인증 정보 저장
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+            filterChain.doFilter(request, response);
+
+        } catch (ExpiredJwtException e) {
+            response.setStatus(401);
+            response.getWriter().write("{\"error\":\"AccessToken expired.\"}");
+        } catch (IllegalArgumentException | JwtException e) {
+            response.setStatus(401);
+            response.getWriter().write("{\"error\":\"" + e.getMessage() + "\"}");
         }
-
-        filterChain.doFilter(request, response);
     }
 
     private String getAccessToken(String authHeader) {

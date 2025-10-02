@@ -1,5 +1,7 @@
 package com.moodmate.common;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,8 +17,11 @@ import java.util.Map;
 public class GlobalExceptionHandler {
     // 일기 없음, 감정 없음
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException ex) {
-        return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    public ResponseEntity<?> handleIllegalArgument(IllegalArgumentException ex) {
+        if (ex.getMessage().contains("token type") || ex.getMessage().contains("RefreshToken not found")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", ex.getMessage()));
+        }
+        return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
     }
 
     // 데이터 무결성 위반 (예: Unique 제약 위반)
@@ -50,5 +55,11 @@ public class GlobalExceptionHandler {
         Map<String, String> body = new HashMap<>();
         body.put("error", message);
         return ResponseEntity.status(status).body(body);
+    }
+
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<?> handleJwt(JwtException e) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("error", "Wrong Token."));
     }
 }
