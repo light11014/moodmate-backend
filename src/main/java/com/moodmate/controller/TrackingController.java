@@ -153,7 +153,7 @@ public class TrackingController {
             parameters = {
                     @Parameter(name = "startDate", description = "조회 시작 날짜", required = true, example = "2025-09-01"),
                     @Parameter(name = "endDate", description = "조회 종료 날짜", required = true, example = "2025-10-01"),
-                    @Parameter(description = "반환할 단어 개수 (기본값: 50)", example = "50")
+                    @Parameter(name = "limit", description = "반환할 단어 개수 (기본값: 50)", example = "50")
             },
             responses = {
                     @ApiResponse(responseCode = "200", description = "조회 성공",
