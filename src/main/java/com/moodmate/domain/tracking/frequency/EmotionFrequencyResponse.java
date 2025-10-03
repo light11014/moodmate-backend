@@ -1,4 +1,4 @@
-package com.moodmate.domain.tracking.dto.frequency;
+package com.moodmate.domain.tracking.frequency;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

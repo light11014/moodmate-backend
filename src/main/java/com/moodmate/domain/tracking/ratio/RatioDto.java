@@ -1,4 +1,4 @@
-package com.moodmate.domain.tracking.dto.ratio;
+package com.moodmate.domain.tracking.ratio;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

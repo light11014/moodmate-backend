@@ -42,6 +42,20 @@ public class JwtTokenProvider {
         });
     }
 
+    public String generateExpiredToken(Long userId, TokenType tokenType) {
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() - 10000);  // 10초 전에 만료
+
+        return Jwts.builder()
+                .setIssuer(jwtProperties.getIssuer())
+                .setSubject(userId.toString())
+                .setIssuedAt(new Date(now.getTime() - tokenType.getExpiration()))
+                .setExpiration(expiry)
+                .claim("token-type", tokenType.name())
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
     // 토큰 생성
     private String createToken(Long userId, TokenType tokenType, Consumer<JwtBuilder> claimsAdder) {
         Date now = new Date();
@@ -58,18 +72,13 @@ public class JwtTokenProvider {
     }
 
     // 토큰 유효성 검증
-    public boolean validateToken(String token, TokenType expectedType) {
-        try {
-            Claims cliams = getClaims(token); // 파싱만 성공하면 유효
+    public void validateToken(String token, TokenType expectedType) {
+        Claims claims = getClaims(token);
 
-            String type = cliams.get("token-type", String.class);
-            if (TokenType.valueOf(type) != expectedType) {
-                throw new IllegalArgumentException("Invalid token type: " + type);
-            }
-            return true;
-        } catch (Exception e) {
-            System.out.println("[ERROR] JWT validation failed: " + e.getMessage());
-            return false;
+        // 토큰 타입 확인
+        String tokenType = claims.get("token-type", String.class);
+        if (!expectedType.name().equals(tokenType)) {
+            throw new IllegalArgumentException("Wrong token type: expected " + expectedType);
         }
     }
 

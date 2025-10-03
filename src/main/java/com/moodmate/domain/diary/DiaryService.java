@@ -11,8 +11,7 @@ import com.moodmate.domain.emotion.Emotion;
 import com.moodmate.domain.user.entity.User;
 import com.moodmate.domain.emotion.EmotionRepository;
 import com.moodmate.domain.user.UserRepository;
-import com.moodmate.domain.user.service.UserService;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,13 +23,14 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class DiaryService {
 
     private final DiaryRepository diaryRepository;
     private final EmotionRepository emotionRepository;
     private final UserRepository userRepository;
 
+    @Transactional
     public Long saveDiary(Long userId, @Valid DiaryRequest dto) {
         // 작성자 조회
         User user = userRepository.findById(userId)
@@ -101,6 +101,7 @@ public class DiaryService {
         return getDiariesByPeriodSummary(userId, start, end);
     }
 
+    @Transactional
     public void updateDiary(Long diaryId, DiaryRequest dto, Long userId) throws AccessDeniedException {
         // 일기 조회
         Diary diary = diaryRepository.findById(diaryId)
@@ -126,6 +127,7 @@ public class DiaryService {
         }
     }
 
+    @Transactional
     public void deleteDiary(Long diaryId, Long userId) throws AccessDeniedException {
         Diary diary = diaryRepository.findById(diaryId)
                 .orElseThrow(() -> new IllegalArgumentException("일기를 찾을 수 없습니다."));
