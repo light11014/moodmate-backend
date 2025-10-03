@@ -96,6 +96,8 @@ public class GlobalExceptionHandler {
         };
 
         return buildErrorResponse(message, HttpStatus.SERVICE_UNAVAILABLE);
+    }
+    
     @ExceptionHandler(JwtException.class)
     public ResponseEntity<?> handleJwt(JwtException e) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
