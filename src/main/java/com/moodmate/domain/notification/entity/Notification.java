@@ -1,4 +1,4 @@
-package com.moodmate.domain.alarm.entity;
+package com.moodmate.domain.notification.entity;
 
 import com.moodmate.common.BaseTimeEntity;
 import com.moodmate.domain.user.entity.User;
@@ -10,8 +10,8 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor
-@Table(name = "alarm")
-public class Alarm extends BaseTimeEntity {
+@Table(name = "Notification")
+public class Notification extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -27,7 +27,7 @@ public class Alarm extends BaseTimeEntity {
     private boolean isChecked = false;
 
     @Builder
-    public Alarm(User user, String content) {
+    public Notification(User user, String content) {
         this.user = user;
         this.content = content;
         this.isChecked = false;
