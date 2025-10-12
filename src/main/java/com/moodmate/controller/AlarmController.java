@@ -23,7 +23,7 @@ import java.util.Map;
 
 @Tag(name = "Alarm-Controller", description = "알람 관련 API")
 @RestController
-@RequestMapping("/api/alarm")
+@RequestMapping("/api/notification")
 @RequiredArgsConstructor
 public class AlarmController {
 
@@ -77,7 +77,7 @@ public class AlarmController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{alarmId}")
+    @GetMapping("/{notificationId}")
     @Operation(summary = "특정 알람 조회",
             description = "알람 ID로 특정 알람을 조회합니다.",
             security = @SecurityRequirement(name = "bearer-key"),
@@ -104,7 +104,7 @@ public class AlarmController {
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/{alarmId}/check")
+    @PatchMapping("/{notificationId}/check")
     @Operation(summary = "알람 확인 상태 변경",
             description = "알람의 확인 상태를 변경합니다.",
             security = @SecurityRequirement(name = "bearer-key"),
@@ -135,7 +135,7 @@ public class AlarmController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{alarmId}")
+    @DeleteMapping("/{notificationId}")
     @Operation(summary = "알람 삭제",
             description = "특정 알람을 삭제합니다.",
             security = @SecurityRequirement(name = "bearer-key"),
