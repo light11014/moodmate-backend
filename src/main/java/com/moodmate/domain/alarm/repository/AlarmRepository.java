@@ -14,11 +14,11 @@ public interface AlarmRepository extends JpaRepository<Alarm, Long> {
     List<Alarm> findUncheckedByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId);
 
     // 특정 사용자의 확인하지 않은 알람 조회
-    @Query("SELECT a FROM Alarm a WHERE a.user.id = :userId AND a.isChecked = false ORDER BY a.created_at DESC")
+    @Query("SELECT a FROM Alarm a WHERE a.user.id = :userId AND a.isChecked = true ORDER BY a.created_at DESC")
     List<Alarm> findCheckedByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId);
 
     // 특정 사용자의 확인한 알람 조회
-    @Query("SELECT a FROM Alarm a WHERE a.user.id = :userId AND a.isChecked = true ORDER BY a.created_at DESC")
+    @Query("SELECT a FROM Alarm a WHERE a.user.id = :userId AND a.isChecked = false ORDER BY a.created_at DESC")
     List<Alarm> findByUserIdAndIsCheckedFalseOrderByCreatedAtDesc(Long userId);
 
     // 확인하지 않은 알람 개수
