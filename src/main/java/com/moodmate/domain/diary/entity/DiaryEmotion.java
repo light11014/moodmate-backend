@@ -15,6 +15,11 @@ public class DiaryEmotion {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "diary_id", nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "fk_diary_emotion_diary",
+                    foreignKeyDefinition = "FOREIGN KEY (diary_id) REFERENCES diary(id) ON DELETE CASCADE"
+            ))
     private Diary diary;
 
     @ManyToOne(fetch = FetchType.LAZY)
