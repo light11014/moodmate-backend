@@ -49,7 +49,6 @@ public class DiaryService {
         }
 
         // 저장 (Cascade로 DiaryEmotion까지 저장됨)
-        user.addDiary(diary);
         diaryRepository.save(diary);
 
         return diary.getId();
