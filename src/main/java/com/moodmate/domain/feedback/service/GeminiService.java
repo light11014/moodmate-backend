@@ -8,13 +8,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,24 +31,18 @@ public class GeminiService {
     @Value("${gemini.api.timeout:30}")
     private int timeoutSeconds;
 
-    /**
-     일기 요약 생성
-     */
     public String generateSummary(String diaryContent) {
         String prompt = """
-                다음 일기를 읽고 주요 사건과 감정을 포함한 3-4문장의 명확하고 구체적인 요약을 작성해주세요.
+                다음 일기를 읽고 주요 사건과 감정을 포함한 40자 이내의 명확하고 짧게 요약을 작성해주세요.
                 단순히 '좋은 하루' 같은 짧은 문장이 아니라, 사용자가 기록한 구체적인 내용을 반영해주세요.
                             
                 일기 내용:
                 %s
                 """.formatted(diaryContent);
 
-        return callGeminiAPI(prompt);
+        return callGeminiAPI(prompt, "요약 생성");
     }
 
-    /**
-     피드백 생성
-     */
     public String generateFeedback(String diaryContent, FeedbackStyle style) {
         String styleDescription = getStyleDescription(style);
         String stylePrompt = getStylePrompt(style);
@@ -72,12 +64,9 @@ public class GeminiService {
                 - 한국어로 자연스럽게 작성
                 """.formatted(stylePrompt, diaryContent, styleDescription);
 
-        return callGeminiAPI(prompt);
+        return callGeminiAPI(prompt, "피드백 생성");
     }
 
-    /**
-     기간별 전체 요약 생성
-     */
     public String generatePeriodSummary(String combinedSummaries, LocalDate startDate, LocalDate endDate) {
         String prompt = """
                 다음은 %s부터 %s까지의 일기 요약들입니다.
@@ -94,13 +83,9 @@ public class GeminiService {
                 - 구체적인 내용을 바탕으로 의미 있는 통찰 제공
                 """.formatted(startDate, endDate, combinedSummaries);
 
-        return callGeminiAPI(prompt);
+        return callGeminiAPI(prompt, "기간별 요약 생성");
     }
 
-
-    /**
-     향후 권장사항 생성
-     */
     public String generateRecommendations(String combinedSummaries) {
         String prompt = """
                 다음 일기 요약들을 바탕으로 사용자에게 도움이 될 수 있는 구체적이고 실용적인 권장사항을 제안해주세요.
@@ -117,15 +102,16 @@ public class GeminiService {
                 - 2문장으로 무조건 간단하게 작성
                 """.formatted(combinedSummaries);
 
-        return callGeminiAPI(prompt);
+        return callGeminiAPI(prompt, "권장사항 생성");
     }
 
-    /**
-     Gemini API 호출
-     */
-    private String callGeminiAPI(String prompt) {
+    private String callGeminiAPI(String prompt, String operation) {
         try {
-            log.info("Gemini API 호출 시작 - 모델: {}", model);
+            log.info("Gemini API 호출 시작 - 작업: {}, 모델: {}", operation, model);
+
+            if (geminiApiKey == null || geminiApiKey.trim().isEmpty()) {
+                throw new RuntimeException("Gemini API 키가 설정되지 않았습니다");
+            }
 
             Map<String, Object> requestBody = createRequestBody(prompt);
 
@@ -136,25 +122,55 @@ public class GeminiService {
                     .retrieve()
                     .bodyToMono(Map.class)
                     .timeout(Duration.ofSeconds(timeoutSeconds))
-                    .doOnError(error -> log.error("Gemini API 호출 중 오류: {}", error.getMessage()))
                     .block();
 
-            log.info("Gemini API 응답 성공");
-            return parseGeminiResponse(response);
+            log.info("Gemini API 응답 성공 - 작업: {}", operation);
+            return parseGeminiResponse(response, operation);
 
         } catch (WebClientResponseException e) {
-            log.error("Gemini API 응답 오류: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
-            return getFallbackResponse();
+            log.error("Gemini API 응답 오류 - 작업: {}, 상태: {}, 응답: {}",
+                    operation, e.getStatusCode(), e.getResponseBodyAsString());
+            throw new RuntimeException("Gemini API 호출 실패: " + e.getStatusCode() + " - " + e.getMessage(), e);
+
         } catch (Exception e) {
-            log.error("Gemini API 호출 실패: {}", e.getMessage(), e);
-            return getFallbackResponse();
+            log.error("Gemini API 호출 중 오류 - 작업: {}, 오류: {}", operation, e.getMessage(), e);
+            throw new RuntimeException("Gemini API 호출 중 오류 발생: " + e.getMessage(), e);
         }
     }
 
+    private String parseGeminiResponse(Map<String, Object> response, String operation) {
+        try {
+            List<?> candidates = (List<?>) response.get("candidates");
+            if (candidates == null || candidates.isEmpty()) {
+                throw new RuntimeException("Gemini API 응답에 candidates가 없습니다");
+            }
 
-    /**
-     Gemini API 요청 본문 생성
-     */
+            Map<?, ?> candidate = (Map<?, ?>) candidates.get(0);
+            Map<?, ?> content = (Map<?, ?>) candidate.get("content");
+            if (content == null) {
+                throw new RuntimeException("Gemini API 응답에 content가 없습니다");
+            }
+
+            List<?> parts = (List<?>) content.get("parts");
+            if (parts == null || parts.isEmpty()) {
+                throw new RuntimeException("Gemini API 응답에 parts가 없습니다");
+            }
+
+            Map<?, ?> part = (Map<?, ?>) parts.get(0);
+            String text = (String) part.get("text");
+
+            if (text == null || text.trim().isEmpty()) {
+                throw new RuntimeException("Gemini API 응답 텍스트가 비어있습니다");
+            }
+
+            return text.trim();
+
+        } catch (Exception e) {
+            log.error("Gemini 응답 파싱 실패 - 작업: {}, 오류: {}", operation, e.getMessage(), e);
+            throw new RuntimeException("Gemini API 응답 파싱 실패: " + e.getMessage(), e);
+        }
+    }
+
     private Map<String, Object> createRequestBody(String prompt) {
         return Map.of(
                 "contents", List.of(
@@ -178,50 +194,6 @@ public class GeminiService {
         );
     }
 
-    /**
-     Gemini 응답 파싱
-     */
-    private String parseGeminiResponse(Map<String, Object> response) {
-        try {
-            log.debug("Gemini 응답 파싱 시작: {}", response);
-
-            List<?> candidates = (List<?>) response.get("candidates");
-            if (candidates == null || candidates.isEmpty()) {
-                log.warn("Gemini 응답에 candidates가 없음");
-                return getFallbackResponse();
-            }
-
-            Map<?, ?> candidate = (Map<?, ?>) candidates.get(0);
-            Map<?, ?> content = (Map<?, ?>) candidate.get("content");
-            if (content == null) {
-                log.warn("Gemini 응답에 content가 없음");
-                return getFallbackResponse();
-            }
-
-            List<?> parts = (List<?>) content.get("parts");
-            if (parts == null || parts.isEmpty()) {
-                log.warn("Gemini 응답에 parts가 없음");
-                return getFallbackResponse();
-            }
-
-            Map<?, ?> part = (Map<?, ?>) parts.get(0);
-            String text = (String) part.get("text");
-
-            if (text == null || text.trim().isEmpty()) {
-                log.warn("Gemini 응답 텍스트가 비어있음");
-                return getFallbackResponse();
-            }
-
-            String cleanedText = text.trim();
-            log.info("Gemini 응답 파싱 성공: {}", cleanedText);
-            return cleanedText;
-
-        } catch (Exception e) {
-            log.error("Gemini 응답 파싱 실패: {}", e.getMessage(), e);
-            return getFallbackResponse();
-        }
-    }
-
     private String getStylePrompt(FeedbackStyle style) {
         return switch (style) {
             case COMFORT -> "위로와 공감";
@@ -238,9 +210,5 @@ public class GeminiService {
             case DIRECT -> "솔직하고 현실적인 관점에서 피드백을 주세요. 감정에 치우치지 않고 객관적이면서도 도움이 되는 조언을 해주세요.";
             case ENCOURAGING -> "사용자가 앞으로 더 나아갈 수 있도록 동기를 부여하는 내용으로 작성해주세요. 가능성과 잠재력을 강조하며 응원해주세요.";
         };
-    }
-
-    private String getFallbackResponse() {
-        return "일기를 잘 읽었습니다. 오늘도 소중한 하루를 기록해주셔서 감사해요. 항상 응원하고 있습니다.";
     }
 }
