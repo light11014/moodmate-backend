@@ -56,6 +56,9 @@ dependencies {
 	// Jackson (JSON 처리)
 	implementation("com.fasterxml.jackson.core:jackson-databind")
 	implementation 'com.github.shin285:KOMORAN:3.3.4'
+
+	// 암호화
+	implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
 }
 
 tasks.named('test') {
