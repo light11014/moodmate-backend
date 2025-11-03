@@ -5,13 +5,16 @@ import com.moodmate.domain.diary.repository.DiaryRepository;
 import com.moodmate.domain.feedback.dto.*;
 import com.moodmate.domain.feedback.entity.AiFeedback;
 import com.moodmate.domain.feedback.entity.DailyFeedbackUsage;
+import com.moodmate.domain.feedback.entity.FeedbackProcessingLock;
 import com.moodmate.domain.feedback.repository.AiFeedbackRepository;
 import com.moodmate.domain.feedback.repository.DailyFeedbackUsageRepository;
+import com.moodmate.domain.feedback.repository.FeedbackProcessingLockRepository;
 import com.moodmate.domain.user.entity.User;
 import com.moodmate.domain.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.AccessDeniedException;
@@ -19,11 +22,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Slf4j
 public class AiFeedbackService {
 
@@ -32,53 +36,115 @@ public class AiFeedbackService {
     private final DiaryRepository diaryRepository;
     private final UserRepository userRepository;
     private final GeminiService geminiService;
+    private final FeedbackProcessingLockRepository lockRepository;
 
     private static final int DAILY_FEEDBACK_LIMIT = 2;
+    private static final int LOCK_TIMEOUT_MINUTES = 5; // 락 타임아웃 (5분)
 
     /**
-     * 피드백 생성 (수정된 메소드)
-     * diaryId를 별도 파라미터로 받음
+     * 피드백 생성 (동시성 제어 추가)
      */
+    @Transactional
     public FeedbackResponse createFeedback(Long userId, Long diaryId, FeedbackStyleRequest request) throws AccessDeniedException {
-        // 사용자 조회
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        String lockKey = UUID.randomUUID().toString();
 
-        // 일기 조회 및 권한 확인
-        Diary diary = diaryRepository.findById(diaryId)
-                .orElseThrow(() -> new IllegalArgumentException("일기를 찾을 수 없습니다."));
+        try {
+            // 1. 락 획득 시도
+            acquireLock(userId, diaryId, lockKey);
 
-        if (!Objects.equals(userId, diary.getUser().getId())) {
-            throw new AccessDeniedException("해당 일기에 대한 권한이 없습니다.");
+            // 2. 사용자 조회
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+            // 3. 일기 조회 및 권한 확인
+            Diary diary = diaryRepository.findById(diaryId)
+                    .orElseThrow(() -> new IllegalArgumentException("일기를 찾을 수 없습니다."));
+
+            if (!Objects.equals(userId, diary.getUser().getId())) {
+                throw new AccessDeniedException("해당 일기에 대한 권한이 없습니다.");
+            }
+
+            // 4. 기존 피드백이 있다면 삭제 (덮어쓰기)
+            aiFeedbackRepository.findLatestByDiaryId(diaryId).ifPresent(existingFeedback -> {
+                log.info("기존 피드백 삭제 - 일기 ID: {}, 피드백 ID: {}", diaryId, existingFeedback.getId());
+                aiFeedbackRepository.delete(existingFeedback);
+            });
+
+            // 5. 일일 사용량 확인 및 업데이트
+            checkAndUpdateDailyUsage(userId);
+
+            // 6. AI 분석 실행 (락이 걸린 상태에서 실행)
+            String summary = geminiService.generateSummary(diary.getContent());
+            String response = geminiService.generateFeedback(diary.getContent(), request.feedbackStyle());
+
+            // 7. 피드백 저장
+            AiFeedback feedback = AiFeedback.builder()
+                    .user(user)
+                    .diary(diary)
+                    .summary(summary)
+                    .response(response)
+                    .feedbackStyle(request.feedbackStyle())
+                    .requestedAt(LocalDateTime.now())
+                    .build();
+
+            aiFeedbackRepository.save(feedback);
+            log.info("피드백 생성 완료 - 사용자: {}, 일기: {}", userId, diaryId);
+
+            return new FeedbackResponse(feedback);
+
+        } finally {
+            // 8. 락 해제 (항상 실행)
+            releaseLock(lockKey);
+        }
+    }
+
+    /**
+     * 락 획득 (별도 트랜잭션)
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void acquireLock(Long userId, Long diaryId, String lockKey) {
+        // 오래된 락 정리 (타임아웃 처리)
+        LocalDateTime timeoutTime = LocalDateTime.now().minusMinutes(LOCK_TIMEOUT_MINUTES);
+        int deletedCount = lockRepository.deleteExpiredLocks(timeoutTime);
+        if (deletedCount > 0) {
+            log.info("만료된 락 {}개 정리됨", deletedCount);
         }
 
-        // 기존 피드백이 있다면 삭제 (덮어쓰기)
-        aiFeedbackRepository.findLatestByDiaryId(diaryId).ifPresent(existingFeedback -> {
-            log.info("기존 피드백 삭제 - 일기 ID: {}, 피드백 ID: {}", diaryId, existingFeedback.getId());
-            aiFeedbackRepository.delete(existingFeedback);
-        });
+        // 기존 락 확인
+        Optional<FeedbackProcessingLock> existingLock = lockRepository.findByUserId(userId);
+        if (existingLock.isPresent()) {
+            log.warn("피드백 처리 중 - 사용자: {}, 일기: {}", userId, diaryId);
+            throw new IllegalStateException("이미 피드백을 생성 중입니다. 잠시 후 다시 시도해주세요.");
+        }
 
-        // 일일 사용량 확인 및 업데이트
-        checkAndUpdateDailyUsage(userId);
-
-        // AI 분석 실행
-        String summary = geminiService.generateSummary(diary.getContent());
-        String response = geminiService.generateFeedback(diary.getContent(), request.feedbackStyle());
-
-        // 피드백 저장
-        AiFeedback feedback = AiFeedback.builder()
+        // 새 락 생성
+        User user = userRepository.getReferenceById(userId);
+        FeedbackProcessingLock lock = FeedbackProcessingLock.builder()
                 .user(user)
-                .diary(diary)
-                .summary(summary)
-                .response(response)
-                .feedbackStyle(request.feedbackStyle())
-                .requestedAt(LocalDateTime.now())
+                .diaryId(diaryId)
+                .lockKey(lockKey)
                 .build();
 
-        aiFeedbackRepository.save(feedback);
-        log.info("피드백 생성 완료 - 사용자: {}, 일기: {}", userId, diaryId);
+        try {
+            lockRepository.save(lock);
+            log.info("락 획득 성공 - 사용자: {}, 일기: {}, 락키: {}", userId, diaryId, lockKey);
+        } catch (Exception e) {
+            log.error("락 획득 실패 - 사용자: {}, 일기: {}, 오류: {}", userId, diaryId, e.getMessage());
+            throw new IllegalStateException("피드백 생성 요청을 처리할 수 없습니다. 잠시 후 다시 시도해주세요.");
+        }
+    }
 
-        return new FeedbackResponse(feedback);
+    /**
+     * 락 해제 (별도 트랜잭션)
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void releaseLock(String lockKey) {
+        try {
+            lockRepository.deleteByLockKey(lockKey);
+            log.info("락 해제 완료 - 락키: {}", lockKey);
+        } catch (Exception e) {
+            log.error("락 해제 중 오류 발생 - 락키: {}, 오류: {}", lockKey, e.getMessage());
+        }
     }
 
     @Transactional(readOnly = true)
@@ -92,10 +158,13 @@ public class AiFeedbackService {
         }
 
         // 가장 최근 피드백 조회
-        AiFeedback feedback = aiFeedbackRepository.findLatestByDiaryId(diaryId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 일기에 대한 피드백이 없습니다."));
-
-        return new FeedbackResponse(feedback);
+        return aiFeedbackRepository.findLatestByDiaryId(diaryId)
+                .map(FeedbackResponse::new)
+                .orElseGet(() -> new FeedbackResponse(
+                        null,
+                        "피드백이 아직 생성되지 않았습니다.",
+                        "피드백이 아직 생성되지 않았습니다.", null, null, null
+                ));
     }
 
     @Transactional(readOnly = true)
@@ -172,6 +241,7 @@ public class AiFeedbackService {
     /**
      * 피드백 삭제
      */
+    @Transactional
     public void deleteFeedback(Long userId, Long diaryId) throws AccessDeniedException {
         // 일기 조회 및 권한 확인
         Diary diary = diaryRepository.findById(diaryId)
