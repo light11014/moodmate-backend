@@ -41,12 +41,15 @@ public class User {
 
     private String pictureUrl;
 
+    @Column(name = "encrypted_dek", nullable = false, length = 500)
+    private String encryptedDek;
+
     public void setUsername(String username) {
         this.username = username;
     }
 
     public static User createOAuthUser(String loginId, String provider, String providerId,
-                                       Role role, String pictureUrl, String email) {
+                                       Role role, String pictureUrl, String email, String encryptedDek) {
         User user = new User();
         user.loginId = loginId;
         user.provider = provider;
@@ -55,6 +58,7 @@ public class User {
         user.pictureUrl = pictureUrl;
         user.email = email;
         user.username = null;
+        user.encryptedDek = encryptedDek;
         return user;
     }
 }

@@ -1,5 +1,7 @@
 package com.moodmate.domain.feedback.service;
 
+import com.moodmate.config.encryption.EncryptionUtil;
+import com.moodmate.config.encryption.KeyManagementService;
 import com.moodmate.domain.diary.entity.Diary;
 import com.moodmate.domain.diary.repository.DiaryRepository;
 import com.moodmate.domain.feedback.dto.*;
@@ -33,6 +35,10 @@ public class AiFeedbackService {
     private final UserRepository userRepository;
     private final GeminiService geminiService;
 
+    private final EncryptionUtil encryptionUtil;
+
+    private final KeyManagementService keyManagementService;
+
     private static final int DAILY_FEEDBACK_LIMIT = 2;
 
     /**
@@ -61,24 +67,34 @@ public class AiFeedbackService {
         // 일일 사용량 확인 및 업데이트
         checkAndUpdateDailyUsage(userId);
 
-        // AI 분석 실행
-        String summary = geminiService.generateSummary(diary.getContent());
-        String response = geminiService.generateFeedback(diary.getContent(), request.feedbackStyle());
+        try {
+            String dek = keyManagementService.decryptDek(user.getEncryptedDek());
 
-        // 피드백 저장
-        AiFeedback feedback = AiFeedback.builder()
-                .user(user)
-                .diary(diary)
-                .summary(summary)
-                .response(response)
-                .feedbackStyle(request.feedbackStyle())
-                .requestedAt(LocalDateTime.now())
-                .build();
+            // 일기 내용 복호화
+            String content = encryptionUtil.decrypt(diary.getContent(), dek);
 
-        aiFeedbackRepository.save(feedback);
-        log.info("피드백 생성 완료 - 사용자: {}, 일기: {}", userId, diaryId);
+            // AI 분석 실행
+            String summary = geminiService.generateSummary(content);
+            String response = geminiService.generateFeedback(content, request.feedbackStyle());
 
-        return new FeedbackResponse(feedback);
+            // 피드백 저장
+            AiFeedback feedback = AiFeedback.builder()
+                    .user(user)
+                    .diary(diary)
+                    .summary(encryptionUtil.encrypt(summary, dek))
+                    .response(encryptionUtil.encrypt(response, dek))
+                    .feedbackStyle(request.feedbackStyle())
+                    .requestedAt(LocalDateTime.now())
+                    .build();
+
+            aiFeedbackRepository.save(feedback);
+            log.info("피드백 생성 완료 - 사용자: {}, 일기: {}", userId, diaryId);
+
+            return new FeedbackResponse(feedback);
+
+        } catch (Exception e) {
+            throw new RuntimeException("AI 피드백 생성 중 오류");
+        }
     }
 
     @Transactional(readOnly = true)

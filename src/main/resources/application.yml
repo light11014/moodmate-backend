@@ -86,3 +86,6 @@ jwt:
   issuer: moodmate@gmail.com
   secret_key: ${JWT_SECRET_KEY}
 
+master:
+  encryption:
+    key: ${MASTER_ENCRYPTION_KEY}

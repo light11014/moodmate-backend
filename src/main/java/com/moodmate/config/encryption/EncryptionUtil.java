@@ -1,4 +1,4 @@
-package com.moodmate.config;
+package com.moodmate.config.encryption;
 
 import org.springframework.stereotype.Component;
 

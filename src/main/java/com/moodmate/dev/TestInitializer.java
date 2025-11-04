@@ -1,5 +1,6 @@
 package com.moodmate.dev;
 
+import com.moodmate.config.encryption.KeyManagementService;
 import com.moodmate.domain.emotion.Emotion;
 import com.moodmate.domain.emotion.EmotionRepository;
 import com.moodmate.domain.user.UserRepository;
@@ -19,8 +20,10 @@ public class TestInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final EmotionRepository emotionRepository;
 
+    private final KeyManagementService managementService;
+
     @Override
-    public void run(String... args) {
+    public void run(String... args) throws Exception {
         // --- test User 생성 ---
         User user = User.createOAuthUser(
                 "moodmate001",
@@ -28,7 +31,8 @@ public class TestInitializer implements CommandLineRunner {
                 "001",
                 Role.USER,
                 "test@example.com",
-                "test"
+                "test",
+                managementService.createAndEncryptDek()
         );
 
         userRepository.findByEmail("test@example.com")

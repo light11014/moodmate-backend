@@ -27,10 +27,13 @@ public class JwtTokenProviderTest {
     @Autowired
     private JwtProperties jwtProperties;
 
+    @Autowired
+    private TestUtils testUtils;
+
     @Test
     public void 리프레시_토큰_생성() {
         // given
-        User testUser = TestUtils.createUser(userRepository);
+        User testUser = testUtils.createUser(userRepository);
         SecretKey key = Keys.hmacShaKeyFor(jwtProperties.getSecretKey().getBytes(StandardCharsets.UTF_8));
 
         // when
