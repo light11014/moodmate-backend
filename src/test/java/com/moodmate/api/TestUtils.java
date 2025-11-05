@@ -1,6 +1,6 @@
 package com.moodmate.api;
 
-import com.moodmate.config.encryption.KeyManagementService;
+import com.moodmate.config.encryption.EncryptionKeyService;
 import com.moodmate.config.jwt.JwtTokenProvider;
 import com.moodmate.domain.token.RefreshToken;
 import com.moodmate.domain.token.RefreshTokenRepository;
@@ -11,10 +11,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class TestUtils {
-    private final KeyManagementService keyManagementService;
+    private final EncryptionKeyService keyService;
 
-    public TestUtils(KeyManagementService keyManagementService) {
-        this.keyManagementService = keyManagementService;
+    public TestUtils(EncryptionKeyService keyService) {
+        this.keyService = keyService;
     }
 
     /**
@@ -22,7 +22,7 @@ public class TestUtils {
      */
     public User createUser(UserRepository userRepository) {
         try {
-            String encryptedDek = keyManagementService.createAndEncryptDek();
+            String encryptedDek = keyService.createAndEncryptDek();
 
             return userRepository.save(User.createOAuthUser(
                     "google_123",

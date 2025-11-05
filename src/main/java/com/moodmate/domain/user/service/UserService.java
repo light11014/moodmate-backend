@@ -1,7 +1,6 @@
 package com.moodmate.domain.user.service;
 
-import com.moodmate.config.encryption.EncryptionUtil;
-import com.moodmate.config.encryption.KeyManagementService;
+import com.moodmate.config.encryption.EncryptionKeyService;
 import com.moodmate.domain.user.UserRepository;
 import com.moodmate.domain.user.entity.Role;
 import com.moodmate.domain.user.entity.User;
@@ -15,8 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class UserService {
     private final UserRepository userRepository;
-    private final EncryptionUtil encryptionUtil;
-    private final KeyManagementService keyManagementService;
+    private final EncryptionKeyService keyService;
 
     @Transactional
     public User findOrCreateUser(OAuth2UserInfo userInfo, String provider) {
@@ -24,7 +22,7 @@ public class UserService {
             String loginId = provider + "_" + userInfo.getProviderId();
 
             // 사용자별 고유 암호화 키 생성
-            String key = keyManagementService.createAndEncryptDek();
+            String key = keyService.createAndEncryptDek();
 
             return userRepository.findByLoginId(loginId)
                     .orElseGet(() -> userRepository.save(User.createOAuthUser(

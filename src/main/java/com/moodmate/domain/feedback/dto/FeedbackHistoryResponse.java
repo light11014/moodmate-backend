@@ -16,9 +16,9 @@ public record FeedbackHistoryResponse(
         int totalCount,
 
         @Schema(description = "피드백 목록 (summary와 response 모두 포함)")
-        List<FeedbackHistoryItem> feedbacks
+        List<FeedbackResponse> feedbacks
 ) {
-    public FeedbackHistoryResponse(LocalDate startDate, LocalDate endDate, List<FeedbackHistoryItem> feedbacks) {
+    public FeedbackHistoryResponse(LocalDate startDate, LocalDate endDate, List<FeedbackResponse> feedbacks) {
         this(startDate, endDate, feedbacks.size(), feedbacks);
     }
 }

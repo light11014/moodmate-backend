@@ -1,7 +1,7 @@
 package com.moodmate.domain.diary;
 
-import com.moodmate.config.encryption.EncryptionUtil;
-import com.moodmate.config.encryption.KeyManagementService;
+import com.moodmate.config.encryption.EncryptionKeyService;
+import com.moodmate.config.encryption.EncryptionService;
 import com.moodmate.domain.diary.dto.*;
 import com.moodmate.domain.diary.entity.Diary;
 import com.moodmate.domain.diary.entity.DiaryEmotion;
@@ -29,9 +29,9 @@ public class DiaryService {
     private final EmotionRepository emotionRepository;
     private final UserRepository userRepository;
 
-    private final EncryptionUtil encryptionUtil;
+    private final EncryptionService encryptionService;
 
-    private final KeyManagementService keyManagementService;
+    private final EncryptionKeyService keyService;
 
     private final DiaryMapper diaryMapper;
 
@@ -42,10 +42,10 @@ public class DiaryService {
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
         try {
-            String dek = keyManagementService.decryptDek(user.getEncryptedDek());
+            String dek = keyService.decryptDek(user.getEncryptedDek());
 
             // 사용자 키로 암호화
-            String encryptedContent = encryptionUtil.encrypt(dto.getContent(), dek);
+            String encryptedContent = encryptionService.encrypt(dto.getContent(), dek);
 
             // Diary 생성
             Diary diary = new Diary(encryptedContent, dto.getDate(), user);
@@ -78,7 +78,7 @@ public class DiaryService {
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
         try {
-            String dek = keyManagementService.decryptDek(user.getEncryptedDek());
+            String dek = keyService.decryptDek(user.getEncryptedDek());
             return diaryMapper.toResponseDto(diary, dek);
         } catch (Exception e) {
             throw new RuntimeException("dek 복호화 중 오류 발생");
@@ -116,7 +116,7 @@ public class DiaryService {
 
 
         try {
-            String dek = keyManagementService.decryptDek(user.getEncryptedDek());
+            String dek = keyService.decryptDek(user.getEncryptedDek());
             return diaryMapper.toResponseDtoList(diaries, dek);
         } catch (Exception e) {
             throw new RuntimeException("dek 복호화 중 오류 발생");
@@ -148,10 +148,10 @@ public class DiaryService {
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
         try {
-            String dek = keyManagementService.decryptDek(user.getEncryptedDek());
+            String dek = keyService.decryptDek(user.getEncryptedDek());
 
             // 일기 내용, 날짜 변경
-            diary.setContent(encryptionUtil.encrypt(dto.getContent(), dek));
+            diary.setContent(encryptionService.encrypt(dto.getContent(), dek));
             diary.setDate(dto.getDate());
 
             // 기존 감정 초기화

@@ -1,6 +1,6 @@
 package com.moodmate.domain.diary.dto;
 
-import com.moodmate.config.encryption.EncryptionUtil;
+import com.moodmate.config.encryption.EncryptionService;
 import com.moodmate.domain.diary.entity.Diary;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class DiaryMapper {
-    private final EncryptionUtil encryptionUtil;
+    private final EncryptionService encryptionService;
 
     /**
      * 암호화된 Diary를 복호화하여 Response DTO로 변환
@@ -20,7 +20,7 @@ public class DiaryMapper {
         try {
             return new DiaryResponse(
                     diary.getId(),
-                    encryptionUtil.decrypt(diary.getContent(), dek),
+                    encryptionService.decrypt(diary.getContent(), dek),
                     diary.getDate(),
                     diary.getDiaryEmotions().stream()
                             .map(e -> new EmotionDto(e.getEmotion().getName(), e.getIntensity()))

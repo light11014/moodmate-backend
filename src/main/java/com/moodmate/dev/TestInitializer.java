@@ -1,6 +1,6 @@
 package com.moodmate.dev;
 
-import com.moodmate.config.encryption.KeyManagementService;
+import com.moodmate.config.encryption.EncryptionKeyService;
 import com.moodmate.domain.emotion.Emotion;
 import com.moodmate.domain.emotion.EmotionRepository;
 import com.moodmate.domain.user.UserRepository;
@@ -20,7 +20,7 @@ public class TestInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final EmotionRepository emotionRepository;
 
-    private final KeyManagementService managementService;
+    private final EncryptionKeyService keyService;
 
     @Override
     public void run(String... args) throws Exception {
@@ -32,7 +32,7 @@ public class TestInitializer implements CommandLineRunner {
                 Role.USER,
                 "test@example.com",
                 "test",
-                managementService.createAndEncryptDek()
+                keyService.createAndEncryptDek()
         );
 
         userRepository.findByEmail("test@example.com")

@@ -1,7 +1,7 @@
 package com.moodmate.domain.feedback.service;
 
-import com.moodmate.config.encryption.EncryptionUtil;
-import com.moodmate.config.encryption.KeyManagementService;
+import com.moodmate.config.encryption.EncryptionKeyService;
+import com.moodmate.config.encryption.EncryptionService;
 import com.moodmate.domain.diary.entity.Diary;
 import com.moodmate.domain.diary.repository.DiaryRepository;
 import com.moodmate.domain.feedback.dto.*;
@@ -35,9 +35,11 @@ public class AiFeedbackService {
     private final UserRepository userRepository;
     private final GeminiService geminiService;
 
-    private final EncryptionUtil encryptionUtil;
+    private final EncryptionService encryptionService;
 
-    private final KeyManagementService keyManagementService;
+    private final EncryptionKeyService keyService;
+
+    private final FeedbackMapper feedbackMapper;
 
     private static final int DAILY_FEEDBACK_LIMIT = 2;
 
@@ -68,10 +70,10 @@ public class AiFeedbackService {
         checkAndUpdateDailyUsage(userId);
 
         try {
-            String dek = keyManagementService.decryptDek(user.getEncryptedDek());
+            String dek = keyService.decryptDek(user.getEncryptedDek());
 
             // 일기 내용 복호화
-            String content = encryptionUtil.decrypt(diary.getContent(), dek);
+            String content = encryptionService.decrypt(diary.getContent(), dek);
 
             // AI 분석 실행
             String summary = geminiService.generateSummary(content);
@@ -81,8 +83,8 @@ public class AiFeedbackService {
             AiFeedback feedback = AiFeedback.builder()
                     .user(user)
                     .diary(diary)
-                    .summary(encryptionUtil.encrypt(summary, dek))
-                    .response(encryptionUtil.encrypt(response, dek))
+                    .summary(encryptionService.encrypt(summary, dek))
+                    .response(encryptionService.encrypt(response, dek))
                     .feedbackStyle(request.feedbackStyle())
                     .requestedAt(LocalDateTime.now())
                     .build();
@@ -103,6 +105,11 @@ public class AiFeedbackService {
         Diary diary = diaryRepository.findById(diaryId)
                 .orElseThrow(() -> new IllegalArgumentException("일기를 찾을 수 없습니다."));
 
+        // 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+
         if (!Objects.equals(diary.getUser().getId(), userId)) {
             throw new AccessDeniedException("해당 일기에 대한 권한이 없습니다.");
         }
@@ -111,18 +118,30 @@ public class AiFeedbackService {
         AiFeedback feedback = aiFeedbackRepository.findLatestByDiaryId(diaryId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 일기에 대한 피드백이 없습니다."));
 
-        return new FeedbackResponse(feedback);
+
+        // AI피드백 복호화
+        try {
+            String dek = keyService.decryptDek(user.getEncryptedDek());
+            return feedbackMapper.toResponseDto(feedback, dek);
+        } catch (Exception e) {
+            throw new RuntimeException("AI 피드백 조회 중 오류");
+        }
     }
 
     @Transactional(readOnly = true)
     public FeedbackHistoryResponse getFeedbackHistory(Long userId, LocalDate startDate, LocalDate endDate) {
         List<AiFeedback> feedbacks = aiFeedbackRepository.findByUserIdAndDateRange(userId, startDate, endDate);
 
-        List<FeedbackHistoryItem> items = feedbacks.stream()
-                .map(FeedbackHistoryItem::new)
-                .toList();
+        // 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        return new FeedbackHistoryResponse(startDate, endDate, items);
+        try {
+            String dek = keyService.decryptDek(user.getEncryptedDek());
+            return feedbackMapper.toFeedbackHistoryResponse(feedbacks, dek, startDate, endDate);
+        } catch (Exception e) {
+            throw new RuntimeException("AI 피드백 history 조회 중 오류");
+        }
     }
 
     @Transactional(readOnly = true)
@@ -142,19 +161,35 @@ public class AiFeedbackService {
             throw new IllegalArgumentException("해당 기간에 분석할 일기 데이터가 없습니다.");
         }
 
-        // 요약들을 결합
-        String combinedSummaries = feedbacks.stream()
-                .map(AiFeedback::getSummary)
-                .filter(Objects::nonNull)
-                .collect(Collectors.joining("\n\n"));
+        // 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        if (combinedSummaries.trim().isEmpty()) {
-            throw new IllegalArgumentException("분석할 요약 데이터가 없습니다.");
-        }
-
+        // 복호화하면서 요약들을 결합
         try {
-            // AI를 통한 종합 분석
-            String periodSummary = geminiService.generatePeriodSummary(combinedSummaries, startDate, endDate);
+            String dek = keyService.decryptDek(user.getEncryptedDek());
+
+            String combinedSummaries = feedbacks.stream()
+                    .map(feedback -> {
+                        try {
+                            return encryptionService.decrypt(feedback.getSummary(), dek);
+                        } catch (Exception e) {
+                            log.error("요약 복호화 실패 - 피드백 ID: {}", feedback.getId(), e);
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .filter(summary -> !summary.trim().isEmpty())
+                    .collect(Collectors.joining("\n\n"));
+
+            if (combinedSummaries.trim().isEmpty()) {
+                throw new IllegalArgumentException("분석할 요약 데이터가 없습니다.");
+            }
+
+            // 이제 복호화된 텍스트로 AI 분석
+            String periodSummary = geminiService.generatePeriodSummary(
+                    combinedSummaries, startDate, endDate
+            );
             String recommendations = geminiService.generateRecommendations(combinedSummaries);
 
             log.info("기간별 분석 완료 - 사용자: {}, 분석된 일기 수: {}", userId, feedbacks.size());
@@ -166,7 +201,6 @@ public class AiFeedbackService {
                     periodSummary,
                     recommendations
             );
-
         } catch (Exception e) {
             log.error("기간별 분석 중 오류 발생 - 사용자: {}, 오류: {}", userId, e.getMessage(), e);
             throw new RuntimeException("기간별 분석을 생성하는 중 오류가 발생했습니다: " + e.getMessage());

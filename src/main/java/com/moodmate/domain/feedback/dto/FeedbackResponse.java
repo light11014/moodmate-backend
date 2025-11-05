@@ -4,11 +4,18 @@ import com.moodmate.domain.feedback.entity.AiFeedback;
 import com.moodmate.domain.feedback.entity.FeedbackStyle;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public record FeedbackResponse(
         @Schema(description = "피드백 ID", example = "1")
         Long feedbackId,
+
+        @Schema(description = "일기 ID")
+        Long diaryId,
+
+        @Schema(description = "일기 날짜")
+        LocalDate diaryDate,
 
         @Schema(description = "일기 요약", example = "오늘 좋은 하루를 보내셨군요.")
         String summary,
@@ -28,6 +35,8 @@ public record FeedbackResponse(
     public FeedbackResponse(AiFeedback feedback) {
         this(
                 feedback.getId(),
+                feedback.getDiary().getId(),
+                feedback.getDiary().getDate(),
                 feedback.getSummary(),
                 feedback.getResponse(),
                 feedback.getFeedbackStyle(),

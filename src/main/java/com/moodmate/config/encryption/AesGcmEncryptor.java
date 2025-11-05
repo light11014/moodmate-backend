@@ -3,7 +3,6 @@ package com.moodmate.config.encryption;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -12,18 +11,10 @@ import java.security.SecureRandom;
 import java.util.Base64;
 
 @Component
-public class EncryptionUtil {
+public class AesGcmEncryptor {
     private static final String ALGORITHM = "AES/GCM/NoPadding";
     private static final int GCM_IV_LENGTH = 12;
     private static final int GCM_TAG_LENGTH = 128;
-
-    // 새로운 암호화 키 생성
-    public String generateKey() throws Exception {
-        KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
-        keyGenerator.init(256);
-        SecretKey key = keyGenerator.generateKey();
-        return Base64.getEncoder().encodeToString(key.getEncoded());
-    }
 
     // 암호화
     public String encrypt(String plainText, String base64Key) throws Exception {
@@ -71,5 +62,4 @@ public class EncryptionUtil {
         byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
         return new String(decryptedBytes, StandardCharsets.UTF_8);
     }
-
 }
