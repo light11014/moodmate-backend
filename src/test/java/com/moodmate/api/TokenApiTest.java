@@ -67,12 +67,15 @@ public class TokenApiTest {
     String refreshToken;
     String accessToken;
 
+    @Autowired
+    private TestUtils testUtils;
+
     @BeforeEach
     void setUp() {
         refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
 
-        user = TestUtils.createUser(userRepository);
+        user = testUtils.createUser(userRepository);
         refreshToken = TestUtils.createRefreshToken(jwtTokenProvider, user, refreshTokenRepository);
         accessToken = TestUtils.createAccessToken(jwtTokenProvider, user);
     }

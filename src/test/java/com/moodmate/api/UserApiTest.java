@@ -50,6 +50,9 @@ public class UserApiTest {
     @Autowired
     RefreshTokenRepository refreshTokenRepository;
 
+    @Autowired
+    private TestUtils testUtils;
+
     @BeforeEach
     void setUp() {
         diaryEmotionRepository.deleteAll();
@@ -58,7 +61,7 @@ public class UserApiTest {
         userRepository.deleteAll();
 
         // User 생성
-        user = TestUtils.createUser(userRepository);
+        user = testUtils.createUser(userRepository);
 
         // 실제 JWT 토큰 발급
         refreshToken = TestUtils.createRefreshToken(jwtTokenProvider, user, refreshTokenRepository);

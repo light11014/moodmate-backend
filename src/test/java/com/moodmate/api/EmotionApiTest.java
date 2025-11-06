@@ -35,6 +35,9 @@ public class EmotionApiTest {
     @Autowired
     JwtTokenProvider jwtTokenProvider; // JWT 발급 유틸
 
+    @Autowired
+    private TestUtils testUtils;
+
     private String token;
 
     User user;
@@ -45,10 +48,10 @@ public class EmotionApiTest {
         userRepository.deleteAll();
 
         // User 생성
-        user = TestUtils.createUser(userRepository);
+        user = testUtils.createUser(userRepository);
 
         // 실제 JWT 토큰 발급
-        token = TestUtils.createAccessToken(jwtTokenProvider, user);
+        token = testUtils.createAccessToken(jwtTokenProvider, user);
     }
 
     @Test

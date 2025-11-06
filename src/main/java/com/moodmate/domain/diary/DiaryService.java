@@ -1,9 +1,8 @@
 package com.moodmate.domain.diary;
 
-import com.moodmate.domain.diary.dto.DiaryMonthSummaryResponse;
-import com.moodmate.domain.diary.dto.DiaryRequest;
-import com.moodmate.domain.diary.dto.DiaryResponse;
-import com.moodmate.domain.diary.dto.EmotionDto;
+import com.moodmate.config.encryption.EncryptionKeyService;
+import com.moodmate.config.encryption.EncryptionService;
+import com.moodmate.domain.diary.dto.*;
 import com.moodmate.domain.diary.entity.Diary;
 import com.moodmate.domain.diary.entity.DiaryEmotion;
 import com.moodmate.domain.diary.repository.DiaryRepository;
@@ -30,34 +29,60 @@ public class DiaryService {
     private final EmotionRepository emotionRepository;
     private final UserRepository userRepository;
 
+    private final EncryptionService encryptionService;
+
+    private final EncryptionKeyService keyService;
+
+    private final DiaryMapper diaryMapper;
+
     @Transactional
     public Long saveDiary(Long userId, @Valid DiaryRequest dto) {
         // 작성자 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
-        // Diary 생성
-        Diary diary = new Diary(dto.getContent(), dto.getDate(), user);
+        try {
+            String dek = keyService.decryptDek(user.getEncryptedDek());
 
-        // 감정 리스트 처리
-        for (EmotionDto e : dto.getEmotions()) {
-            Emotion emotion = emotionRepository.findByName(e.name())
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 감정입니다: " + e.name()));
+            // 사용자 키로 암호화
+            String encryptedContent = encryptionService.encrypt(dto.getContent(), dek);
 
-            DiaryEmotion diaryEmotion = new DiaryEmotion(emotion, e.intensity());
-            diary.addDiaryEmotion(diaryEmotion); // 양방향 연결
+            // Diary 생성
+            Diary diary = new Diary(encryptedContent, dto.getDate(), user);
+
+            // 감정 리스트 처리
+            for (EmotionDto e : dto.getEmotions()) {
+                Emotion emotion = emotionRepository.findByName(e.name())
+                        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 감정입니다: " + e.name()));
+
+                DiaryEmotion diaryEmotion = new DiaryEmotion(emotion, e.intensity());
+                diary.addDiaryEmotion(diaryEmotion); // 양방향 연결
+            }
+
+            // 저장 (Cascade로 DiaryEmotion까지 저장됨)
+            diaryRepository.save(diary);
+
+            return diary.getId();
+
+        } catch(Exception e) {
+            throw new RuntimeException("일기 암호화 중 오류 발생", e);
         }
-
-        // 저장 (Cascade로 DiaryEmotion까지 저장됨)
-        diaryRepository.save(diary);
-
-        return diary.getId();
     }
 
     public DiaryResponse getDiaryByDate(Long userId, LocalDate date) {
         Diary diary = diaryRepository.findByUserIdAndDate(userId, date)
                 .orElseThrow(() -> new IllegalArgumentException("해당 날짜의 일기가 없습니다."));
-        return new DiaryResponse(diary);
+
+        // 작성자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        try {
+            String dek = keyService.decryptDek(user.getEncryptedDek());
+            return diaryMapper.toResponseDto(diary, dek);
+        } catch (Exception e) {
+            throw new RuntimeException("dek 복호화 중 오류 발생");
+        }
     }
 
     /**
@@ -83,11 +108,19 @@ public class DiaryService {
      * 기간별 일기 조회 - 전체 내용 포함
      */
     public List<DiaryResponse> getDiariesByPeriodFull(Long userId, LocalDate startDate, LocalDate endDate) {
+        // 작성자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
         List<Diary> diaries = diaryRepository.findByUserIdAndDateBetween(userId, startDate, endDate);
 
-        return diaries.stream()
-                .map(DiaryResponse::new)
-                .toList();
+
+        try {
+            String dek = keyService.decryptDek(user.getEncryptedDek());
+            return diaryMapper.toResponseDtoList(diaries, dek);
+        } catch (Exception e) {
+            throw new RuntimeException("dek 복호화 중 오류 발생");
+        }
     }
 
     /**
@@ -110,19 +143,29 @@ public class DiaryService {
             throw new AccessDeniedException("해당 일기에 접근할 수 없습니다.");
         }
 
-        // 일기 내용, 날짜 변경
-        diary.setContent(dto.getContent());
-        diary.setDate(dto.getDate());
+        // 작성자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
-        // 기존 감정 초기화
-        diary.getDiaryEmotions().clear();
+        try {
+            String dek = keyService.decryptDek(user.getEncryptedDek());
 
-        // 새 감정들 추가
-        for (EmotionDto e : dto.getEmotions()) {
-            Emotion emotion = emotionRepository.findByName(e.name())
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 감정입니다: " + e.name()));
-            DiaryEmotion de = new DiaryEmotion(emotion, e.intensity());
-            diary.addDiaryEmotion(de);
+            // 일기 내용, 날짜 변경
+            diary.setContent(encryptionService.encrypt(dto.getContent(), dek));
+            diary.setDate(dto.getDate());
+
+            // 기존 감정 초기화
+            diary.getDiaryEmotions().clear();
+
+            // 새 감정들 추가
+            for (EmotionDto e : dto.getEmotions()) {
+                Emotion emotion = emotionRepository.findByName(e.name())
+                        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 감정입니다: " + e.name()));
+                DiaryEmotion de = new DiaryEmotion(emotion, e.intensity());
+                diary.addDiaryEmotion(de);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("일기 암호화 중 오류");
         }
     }
 
@@ -135,6 +178,6 @@ public class DiaryService {
             throw new AccessDeniedException("해당 일기에 접근할 수 없습니다.");
         }
 
-        diaryRepository.delete(diary); // DiaryEmotion도 함께 삭제됨
+        diaryRepository.delete(diary);
     }
 }

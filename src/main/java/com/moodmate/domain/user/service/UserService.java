@@ -1,5 +1,6 @@
 package com.moodmate.domain.user.service;
 
+import com.moodmate.config.encryption.EncryptionKeyService;
 import com.moodmate.domain.user.UserRepository;
 import com.moodmate.domain.user.entity.Role;
 import com.moodmate.domain.user.entity.User;
@@ -12,22 +13,31 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class UserService {
-
     private final UserRepository userRepository;
+    private final EncryptionKeyService keyService;
 
     @Transactional
     public User findOrCreateUser(OAuth2UserInfo userInfo, String provider) {
-        String loginId = provider + "_" + userInfo.getProviderId();
+        try {
+            String loginId = provider + "_" + userInfo.getProviderId();
 
-        return userRepository.findByLoginId(loginId)
-                .orElseGet(() -> userRepository.save(User.createOAuthUser(
-                        loginId,
-                        provider,
-                        userInfo.getProviderId(),
-                        Role.USER,
-                        userInfo.getPicture(),
-                        userInfo.getEmail()
-                )));
+            // 사용자별 고유 암호화 키 생성
+            String key = keyService.createAndEncryptDek();
+
+            return userRepository.findByLoginId(loginId)
+                    .orElseGet(() -> userRepository.save(User.createOAuthUser(
+                            loginId,
+                            provider,
+                            userInfo.getProviderId(),
+                            Role.USER,
+                            userInfo.getPicture(),
+                            userInfo.getEmail(),
+                            key
+                    )));
+
+        } catch (Exception e) {
+            throw new RuntimeException("회원가입 중 오류 발생", e);
+        }
     }
 
     public User findById(Long userId) {

@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 
-@Tag(name = "Feedback-Controller", description = "AI 피드백 관련 API")
+@Tag(name = "AI피드백", description = "AI 피드백 관련 API")
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
