@@ -39,10 +39,10 @@ public class AiFeedbackService {
     private final FeedbackProcessingLockRepository lockRepository;
 
     private static final int DAILY_FEEDBACK_LIMIT = 2;
-    private static final int LOCK_TIMEOUT_MINUTES = 5; // 락 타임아웃 (5분)
+    private static final int LOCK_TIMEOUT_MINUTES = 5;
 
     /**
-     * 피드백 생성 (동시성 제어 추가)
+     * 피드백 생성 (동시성 제어 및 덮어쓰기 지원)
      */
     @Transactional
     public FeedbackResponse createFeedback(Long userId, Long diaryId, FeedbackStyleRequest request) throws AccessDeniedException {
@@ -64,13 +64,18 @@ public class AiFeedbackService {
                 throw new AccessDeniedException("해당 일기에 대한 권한이 없습니다.");
             }
 
-            // 4. 기존 피드백이 있다면 삭제 (덮어쓰기)
-            aiFeedbackRepository.findLatestByDiaryId(diaryId).ifPresent(existingFeedback -> {
-                log.info("기존 피드백 삭제 - 일기 ID: {}, 피드백 ID: {}", diaryId, existingFeedback.getId());
-                aiFeedbackRepository.delete(existingFeedback);
-            });
+            // 4. 기존 피드백 확인 및 삭제 (덮어쓰기)
+            Optional<AiFeedback> existingFeedback = aiFeedbackRepository.findLatestByDiaryId(diaryId);
+            boolean isOverwrite = existingFeedback.isPresent();
 
-            // 5. 일일 사용량 확인 및 업데이트
+            if (isOverwrite) {
+                // 덮어쓰기 모드: 기존 피드백 삭제 (사용량은 감소시키지 않음)
+                AiFeedback oldFeedback = existingFeedback.get();
+                log.info("기존 피드백 삭제 (덮어쓰기) - 일기 ID: {}, 피드백 ID: {}", diaryId, oldFeedback.getId());
+                aiFeedbackRepository.delete(oldFeedback);
+            }
+
+            // 5. 일일 사용량 확인 및 업데이트 (덮어쓰기든 신규든 항상 사용량 증가)
             checkAndUpdateDailyUsage(userId);
 
             // 6. AI 분석 실행 (락이 걸린 상태에서 실행)
@@ -88,7 +93,8 @@ public class AiFeedbackService {
                     .build();
 
             aiFeedbackRepository.save(feedback);
-            log.info("피드백 생성 완료 - 사용자: {}, 일기: {}", userId, diaryId);
+            log.info("피드백 {} 완료 - 사용자: {}, 일기: {}",
+                    isOverwrite ? "덮어쓰기" : "생성", userId, diaryId);
 
             return new FeedbackResponse(feedback);
 
@@ -239,7 +245,7 @@ public class AiFeedbackService {
     }
 
     /**
-     * 피드백 삭제
+     * 피드백 삭제 (사용량은 감소시키지 않음)
      */
     @Transactional
     public void deleteFeedback(Long userId, Long diaryId) throws AccessDeniedException {
@@ -260,11 +266,14 @@ public class AiFeedbackService {
             throw new AccessDeniedException("해당 피드백에 대한 권한이 없습니다.");
         }
 
-        // 피드백 삭제
+        // 피드백 삭제 (사용량은 감소시키지 않음)
         aiFeedbackRepository.delete(feedback);
         log.info("피드백 삭제 완료 - 사용자: {}, 일기: {}, 피드백: {}", userId, diaryId, feedback.getId());
     }
 
+    /**
+     * 일일 사용량 확인 및 증가
+     */
     private void checkAndUpdateDailyUsage(Long userId) {
         LocalDate today = LocalDate.now();
 
