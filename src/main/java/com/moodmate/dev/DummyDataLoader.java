@@ -64,13 +64,35 @@ public class DummyDataLoader implements ApplicationRunner {
 
         log.info("더미 데이터 로딩 시작...");
 
-        // 1. 상세 사용자 3명 로드
-        loadDetailedUsers();
+//        // 1. 상세 사용자 3명 로드
+//        loadDetailedUsers();
+//
+//        // 2. 단순 사용자 97명 로드
+//        loadSimpleUsers();
+//
+//        loadDiariesForCurrentUser();
+//
+//        log.info("더미 데이터 로딩 완료!");
+    }
 
-        // 2. 단순 사용자 97명 로드
-        loadSimpleUsers();
+    private void loadDiariesForCurrentUser() throws Exception {
+        ClassPathResource resource = new ClassPathResource("dummy-data/detailed-users.json");
+        DummyDataRequest data = objectMapper.readValue(
+                resource.getInputStream(),
+                DummyDataRequest.class
+        );
 
-        log.info("더미 데이터 로딩 완료!");
+        DummyDataRequest.DetailedUserData firstUserData = data.getUsers().get(0);
+
+        String targetEmail = "mail@gmail.com"; // 실제 이메일로 변경
+        User currentUser = userRepository.findByEmail(targetEmail)
+                .orElseThrow(() -> new IllegalStateException("해당 이메일의 사용자를 찾을 수 없습니다: " + targetEmail));
+
+        log.info("현재 사용자: {} (ID: {})", currentUser.getUsername(), currentUser.getId());
+
+        diaryService.createDiariesBatch(currentUser.getId(), firstUserData.getDiaries());
+
+        log.info("일기 {}개 저장 완료!", firstUserData.getDiaries().size());
     }
 
     private void loadDetailedUsers() throws Exception {
