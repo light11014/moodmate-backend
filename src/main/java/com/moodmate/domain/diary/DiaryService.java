@@ -10,6 +10,7 @@ import com.moodmate.domain.emotion.Emotion;
 import com.moodmate.domain.user.entity.User;
 import com.moodmate.domain.emotion.EmotionRepository;
 import com.moodmate.domain.user.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,9 @@ import org.springframework.stereotype.Service;
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -179,5 +182,38 @@ public class DiaryService {
         }
 
         diaryRepository.delete(diary);
+    }
+
+    @Transactional
+    public void createDiariesBatch(Long userId, List<DiaryRequest> diaryRequests) throws Exception {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+        // DEK 한번만 복호화
+        String dek = keyService.decryptDek(user.getEncryptedDek());
+
+        List<Diary> diaries = new ArrayList<>();
+
+        for (DiaryRequest dto : diaryRequests) {
+            // 사용자 키로 암호화
+            String encryptedContent = encryptionService.encrypt(dto.getContent(), dek);
+
+            // Diary 생성
+            Diary diary = new Diary(encryptedContent, dto.getDate(), user);
+
+            // 감정 리스트 처리
+            for (EmotionDto e : dto.getEmotions()) {
+                Emotion emotion = emotionRepository.findByName(e.name())
+                        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 감정입니다: " + e.name()));
+
+                DiaryEmotion diaryEmotion = new DiaryEmotion(emotion, e.intensity());
+                diary.addDiaryEmotion(diaryEmotion); // 양방향 연결
+            }
+
+            diaries.add(diary);
+        }
+
+        // 배치 저장 (Cascade로 DiaryEmotion까지 저장됨)
+        diaryRepository.saveAll(diaries);
     }
 }
