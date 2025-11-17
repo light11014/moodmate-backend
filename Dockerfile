@@ -1,5 +1,5 @@
-# 1. JDK 17 기반 이미지 (가볍고 안정적)
-FROM openjdk:17-jdk-slim
+# 1. JDK 17 기반 이미지
+FROM openjdk:17-jdk
 
 # 2. 컨테이너 내부 작업 디렉토리 생성
 WORKDIR /app
