@@ -20,24 +20,28 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # 3. DockerHub 로그인
+      # 3. Gradle로 JAR 빌드 (테스트 생략)
+      - name: Build Jar
+        run: ./gradlew clean build -x test
+
+      # 4. DockerHub 로그인
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 4. 백엔드 Docker 이미지 빌드
+      # 5. 백엔드 Docker 이미지 빌드
       - name: Build Backend Docker Image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/backend:latest ./backend
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/backend:latest .
 
-      # 5. DockerHub push
+      # 6. DockerHub push
       - name: Push Backend Image
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/backend:latest
 
-      # 6. EC2에 SSH로 접속하여 서비스 pull & restart
+      # 7. EC2에 SSH로 접속하여 서비스 pull & restart
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
