@@ -36,14 +36,23 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
 
         // 쿠키 생성
-        String cookieValue = String.format(
+        Cookie cookie = new Cookie("mm-rt", token);
+        cookie.setPath("/");
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setDomain("moodmate.duckdns.org");
+
+        // SameSite 는 Cookie API가 지원 안 하므로 직접 헤더로 설정
+
+        String cookieHeader = String.format(
                 "mm-rt=%s; Path=/; HttpOnly; Secure; SameSite=None; Domain=moodmate.duckdns.org",
                 token
         );
-        response.setHeader("Set-Cookie", cookieValue);
+        response.addHeader("Set-Cookie", cookieHeader);
 
 
-        // 리다이렉트
+        // OAuth 후 SPA로 리다이렉트
         response.sendRedirect("https://moodmate.duckdns.org/redirect");
+
     }
 }
