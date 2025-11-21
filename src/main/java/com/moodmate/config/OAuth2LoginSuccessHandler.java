@@ -8,6 +8,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,7 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtTokenProvider jwtTokenProvider;
@@ -26,18 +28,18 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException {
 
-        System.out.println("===== [SUCCESS] OAuth2 Login SuccessHandler START =====");
+        log.info("===== [SUCCESS] OAuth2 Login SuccessHandler START =====");
 
         // 사용자 정보 꺼내기
         CustomOauth2User userDetails = (CustomOauth2User) authentication.getPrincipal();
         User user = userDetails.getUser();
-        System.out.println("[OAuth] User ID = " + user.getId());
-        System.out.println("[OAuth] User Email = " + user.getEmail());
+        log.info("[OAuth] User ID = " + user.getId());
+        log.info("[OAuth] User Email = " + user.getEmail());
 
         // JWT 생성
         String token = jwtTokenProvider.createRefreshToken(user.getId());
         refreshTokenService.saveRefreshToken(user, token);
-        System.out.println("[OAuth] Refresh Token Saved");
+        log.info("[OAuth] Refresh Token Saved");
 
 
         // 쿠키 생성
@@ -55,9 +57,9 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         );
         response.addHeader("Set-Cookie", cookieHeader);
 
-        System.out.println("[OAuth] Set-Cookie Header Added");
+        log.info("[OAuth] Set-Cookie Header Added");
 
-        System.out.println("===== [SUCCESS] OAuth2 Login SuccessHandler END =====");
+        log.info("===== [SUCCESS] OAuth2 Login SuccessHandler END =====");
 
         // OAuth 후 SPA로 리다이렉트
         response.sendRedirect("https://moodmate.duckdns.org/redirect");
