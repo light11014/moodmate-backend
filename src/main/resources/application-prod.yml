@@ -75,3 +75,9 @@ logging:
   level:
     root: INFO
     com.moodmate: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
