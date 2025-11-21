@@ -26,7 +26,7 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
         Cookie cookie = new Cookie("mm-rt", null);
         cookie.setPath("/");
         cookie.setHttpOnly(true);
-        // cookie.setSecure(true); // HTTPS 환경이라면 true
+        cookie.setSecure(true); // HTTPS 환경이라면 true
         cookie.setMaxAge(0);
         response.addCookie(cookie);
 
