@@ -5,6 +5,9 @@ spring:
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
 
+  jackson:
+    time_zone: Asia/Seoul
+
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
@@ -15,6 +18,8 @@ spring:
       hibernate:
         format_sql: true
         show_sql: false
+        jdbc:
+          time_zone: Asia/Seoul
 
   security:
     oauth2:
