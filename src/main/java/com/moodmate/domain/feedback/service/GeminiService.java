@@ -35,6 +35,7 @@ public class GeminiService {
         String prompt = """
                 다음 일기를 읽고 주요 사건과 감정을 포함한 40자 이내의 명확하고 짧게 요약을 작성해주세요.
                 단순히 '좋은 하루' 같은 짧은 문장이 아니라, 사용자가 기록한 구체적인 내용을 반영해주세요.
+                15자 이내의 짧은 일기라면 있는 그대로 출력해주세요.
                             
                 일기 내용:
                 %s
@@ -121,7 +122,23 @@ public class GeminiService {
                     .bodyValue(requestBody)
                     .retrieve()
                     .bodyToMono(Map.class)
+
+                    // 503, 429 같은 과부하 오류 자동 재시도
+                    .retryWhen(
+                            reactor.util.retry.Retry
+                                    .backoff(3, Duration.ofMillis(500)) // 0.5초 → 1초 → 2초
+                                    .filter(ex ->
+                                            ex instanceof WebClientResponseException &&
+                                                    (
+                                                            ((WebClientResponseException) ex).getStatusCode().value() == 503 ||
+                                                                    ((WebClientResponseException) ex).getStatusCode().value() == 429
+                                                    )
+                                    )
+                    )
+
+                    // 전체 타임아웃
                     .timeout(Duration.ofSeconds(timeoutSeconds))
+
                     .block();
 
             log.info("Gemini API 응답 성공 - 작업: {}", operation);
