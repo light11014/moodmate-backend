@@ -180,4 +180,9 @@ public class DiaryService {
 
         diaryRepository.delete(diary);
     }
+
+    public Integer getDiaryCountByPeriod(Long userId, LocalDate startDate, LocalDate endDate) {
+        return diaryRepository.countByUserIdAndDateBetween(userId, startDate, endDate);
+    }
+
 }
