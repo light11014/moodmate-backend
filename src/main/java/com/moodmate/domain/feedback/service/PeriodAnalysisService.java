@@ -33,6 +33,7 @@ public class PeriodAnalysisService {
     private final GeminiService geminiService;
     private final EncryptionService encryptionService;
     private final EncryptionKeyService keyService;
+    private final FeedbackMapper feedbackMapper;
 
     /**
      * 종합 피드백 생성 및 저장
@@ -57,10 +58,11 @@ public class PeriodAnalysisService {
         if (existingAnalysis.isPresent() && !request.isOverwrite()) {
             // 기존 분석이 있고 덮어쓰기가 아니면 기존 분석 반환
             log.info("기존 종합 피드백 반환 - ID: {}", existingAnalysis.get().getId());
-            return convertToDetailResponse(existingAnalysis.get(), user);
+            String dek = keyService.decryptDek(user.getEncryptedDek());
+            return feedbackMapper.toPeriodAnalysisDetailResponse(existingAnalysis.get(), dek);
         }
 
-        // 3. 해당 기간의 일기들 직접 조회 (DiaryRepository 사용)
+        // 3. 해당 기간의 일기들 직접 조회
         List<Diary> diaries = diaryRepository.findByUserIdAndDateBetween(userId, startDate, endDate);
 
         if (diaries.isEmpty()) {
@@ -90,7 +92,7 @@ public class PeriodAnalysisService {
             throw new IllegalArgumentException("분석할 일기 데이터가 없습니다.");
         }
 
-        // 6. AI 종합 분석 생성 (일기 내용 기반)
+        // 6. AI 종합 분석 생성
         String periodSummary = geminiService.generatePeriodSummary(combinedDiaryContents, startDate, endDate);
         String recommendations = geminiService.generateRecommendations(combinedDiaryContents);
 
@@ -121,13 +123,13 @@ public class PeriodAnalysisService {
         log.info("종합 피드백 생성 완료 - 사용자: {}, 분석 ID: {}, 일기 수: {}",
                 userId, analysis.getId(), diaries.size());
 
-        return convertToDetailResponse(analysis, user);
+        return feedbackMapper.toPeriodAnalysisDetailResponse(analysis, dek);
     }
 
     /**
      * 종합 피드백 상세 조회
      */
-    public PeriodAnalysisDetailResponse getPeriodAnalysis(Long userId, Long analysisId) throws AccessDeniedException {
+    public PeriodAnalysisDetailResponse getPeriodAnalysis(Long userId, Long analysisId) throws Exception {
         // 분석 조회 및 권한 확인
         PeriodAnalysis analysis = periodAnalysisRepository.findByIdAndUserId(analysisId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("종합 피드백을 찾을 수 없습니다."));
@@ -136,7 +138,10 @@ public class PeriodAnalysisService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        return convertToDetailResponse(analysis, user);
+        // 복호화 키 준비
+        String dek = keyService.decryptDek(user.getEncryptedDek());
+
+        return feedbackMapper.toPeriodAnalysisDetailResponse(analysis, dek);
     }
 
     /**
@@ -144,19 +149,14 @@ public class PeriodAnalysisService {
      */
     public PeriodAnalysisListResponse getAllPeriodAnalyses(Long userId) {
         List<PeriodAnalysis> analyses = periodAnalysisRepository.findAllByUserId(userId);
-
-        List<PeriodAnalysisListItem> items = analyses.stream()
-                .map(this::convertToListItem)
-                .toList();
-
-        return new PeriodAnalysisListResponse(items);
+        return feedbackMapper.toPeriodAnalysisListResponse(analyses);
     }
 
     /**
      * 특정 기간의 종합 피드백 조회 (가장 최근 것)
      */
     public Optional<PeriodAnalysisDetailResponse> getPeriodAnalysisByPeriod(
-            Long userId, LocalDate startDate, LocalDate endDate) {
+            Long userId, LocalDate startDate, LocalDate endDate) throws Exception {
 
         Optional<PeriodAnalysis> analysis =
                 periodAnalysisRepository.findLatestByUserIdAndPeriod(userId, startDate, endDate);
@@ -168,7 +168,9 @@ public class PeriodAnalysisService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        return Optional.of(convertToDetailResponse(analysis.get(), user));
+        String dek = keyService.decryptDek(user.getEncryptedDek());
+
+        return Optional.of(feedbackMapper.toPeriodAnalysisDetailResponse(analysis.get(), dek));
     }
 
     /**
@@ -182,40 +184,5 @@ public class PeriodAnalysisService {
 
         periodAnalysisRepository.delete(analysis);
         log.info("종합 피드백 삭제 완료 - 사용자: {}, 분석 ID: {}", userId, analysisId);
-    }
-
-    /**
-     * PeriodAnalysis를 상세 응답 DTO로 변환 (복호화 포함)
-     */
-    private PeriodAnalysisDetailResponse convertToDetailResponse(PeriodAnalysis analysis, User user) {
-        try {
-            String dek = keyService.decryptDek(user.getEncryptedDek());
-
-            return PeriodAnalysisDetailResponse.builder()
-                    .analysisId(analysis.getId())
-                    .startDate(analysis.getStartDate())
-                    .endDate(analysis.getEndDate())
-                    .analyzedDiaryCount(analysis.getAnalyzedDiaryCount())
-                    .periodSummary(encryptionService.decrypt(analysis.getPeriodSummary(), dek))
-                    .recommendations(encryptionService.decrypt(analysis.getRecommendations(), dek))
-                    .createdAt(analysis.getCreated_at())
-                    .build();
-        } catch (Exception e) {
-            log.error("종합 피드백 복호화 중 오류 - 분석 ID: {}", analysis.getId(), e);
-            throw new RuntimeException("종합 피드백 조회 중 오류가 발생했습니다.", e);
-        }
-    }
-
-    /**
-     * PeriodAnalysis를 목록 아이템 DTO로 변환
-     */
-    private PeriodAnalysisListItem convertToListItem(PeriodAnalysis analysis) {
-        return PeriodAnalysisListItem.builder()
-                .analysisId(analysis.getId())
-                .startDate(analysis.getStartDate())
-                .endDate(analysis.getEndDate())
-                .analyzedDiaryCount(analysis.getAnalyzedDiaryCount())
-                .createdAt(analysis.getCreated_at())
-                .build();
     }
 }
