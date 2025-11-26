@@ -2,6 +2,7 @@ package com.moodmate.domain.feedback.dto;
 
 import com.moodmate.config.encryption.EncryptionService;
 import com.moodmate.domain.feedback.entity.AiFeedback;
+import com.moodmate.domain.feedback.entity.PeriodAnalysis;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -48,5 +49,50 @@ public class FeedbackMapper {
 
         return new FeedbackHistoryResponse(startDate, endDate, items);
     }
-}
 
+    /**
+     * 암호화된 PeriodAnalysis를 복호화하여 Detail Response DTO로 변환
+     */
+    public PeriodAnalysisDetailResponse toPeriodAnalysisDetailResponse(
+            PeriodAnalysis analysis, String dek) {
+        try {
+            return PeriodAnalysisDetailResponse.builder()
+                    .analysisId(analysis.getId())
+                    .startDate(analysis.getStartDate())
+                    .endDate(analysis.getEndDate())
+                    .analyzedDiaryCount(analysis.getAnalyzedDiaryCount())
+                    .periodSummary(encryptionService.decrypt(analysis.getPeriodSummary(), dek))
+                    .recommendations(encryptionService.decrypt(analysis.getRecommendations(), dek))
+                    .createdAt(analysis.getCreated_at())
+                    .build();
+        } catch (Exception e) {
+            throw new RuntimeException("종합 피드백 복호화 중 오류 발생", e);
+        }
+    }
+
+    /**
+     * PeriodAnalysis를 목록 아이템 DTO로 변환
+     */
+    public PeriodAnalysisListItem toPeriodAnalysisListItem(PeriodAnalysis analysis) {
+        return PeriodAnalysisListItem.builder()
+                .analysisId(analysis.getId())
+                .startDate(analysis.getStartDate())
+                .endDate(analysis.getEndDate())
+                .analyzedDiaryCount(analysis.getAnalyzedDiaryCount())
+                .createdAt(analysis.getCreated_at())
+                .build();
+    }
+
+    /**
+     * 여러 PeriodAnalysis를 목록 Response로 변환
+     */
+    public PeriodAnalysisListResponse toPeriodAnalysisListResponse(
+            List<PeriodAnalysis> analyses) {
+
+        List<PeriodAnalysisListItem> items = analyses.stream()
+                .map(this::toPeriodAnalysisListItem)
+                .toList();
+
+        return new PeriodAnalysisListResponse(items);
+    }
+}

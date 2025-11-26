@@ -76,7 +76,7 @@ public class PeriodAnalysisController {
     @GetMapping("/{analysisId}")
     public ResponseEntity<PeriodAnalysisDetailResponse> getPeriodAnalysis(
             @PathVariable Long analysisId,
-            @AuthenticationPrincipal CustomOauth2User userDetails) throws AccessDeniedException {
+            @AuthenticationPrincipal CustomOauth2User userDetails) throws Exception {
 
         Long userId = userDetails.getUser().getId();
         log.info("종합 피드백 조회 요청 - 사용자: {}, 분석 ID: {}", userId, analysisId);
@@ -121,7 +121,7 @@ public class PeriodAnalysisController {
     public ResponseEntity<PeriodAnalysisDetailResponse> getPeriodAnalysisByPeriod(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            @AuthenticationPrincipal CustomOauth2User userDetails) {
+            @AuthenticationPrincipal CustomOauth2User userDetails) throws Exception {
 
         Long userId = userDetails.getUser().getId();
         log.info("특정 기간 종합 피드백 조회 요청 - 사용자: {}, 기간: {} ~ {}",
