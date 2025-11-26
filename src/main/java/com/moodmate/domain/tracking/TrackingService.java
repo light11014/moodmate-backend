@@ -51,6 +51,8 @@ public class TrackingService {
         validateParameters(userId, startDate, endDate);
 
         List<Object[]> result = diaryEmotionRepository.sumEmotionIntensityByPeriod(userId, startDate, endDate);
+        Integer diaryCount = diaryRepository.countByUserIdAndDateBetween(userId, startDate, endDate);
+
 
         long total = result.stream()
                 .mapToLong(r -> ((Number) r[1]).longValue())
@@ -67,7 +69,7 @@ public class TrackingService {
                 userId,
                 startDate,
                 endDate,
-                data.size(),
+                diaryCount,
                 LocalDateTime.now()
         );
 
