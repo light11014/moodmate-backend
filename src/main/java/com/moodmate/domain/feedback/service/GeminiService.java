@@ -33,8 +33,7 @@ public class GeminiService {
 
     public String generateSummary(String diaryContent) {
         String prompt = """
-                일기의 주요 키워드 3가지를 뽑아서, 키워드 : 같은 형태로 나타내주세요. 키워드 :은 1번만 쓰면 됩니다.
-                각 키워드들은 ,으로 구분해주세요.
+                일기의 주요 키워드 3가지를 뽑아서, 각 키워드들을 반점으로 구분해서 써주세요.
                 만약, 3가지를 뽑을 수 없을 정도로 일기가 짧다면 2개만 뽑아서 나타내주세요.
                             
                 일기 내용:
