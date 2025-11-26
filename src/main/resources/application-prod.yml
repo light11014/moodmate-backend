@@ -85,4 +85,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: "*"
+        include: "health, metrics, prometheus"
+  endpoint:
+    health:
+      show-components: always
