@@ -7,9 +7,12 @@ import com.moodmate.domain.diary.entity.Diary;
 import com.moodmate.domain.diary.entity.DiaryEmotion;
 import com.moodmate.domain.diary.repository.DiaryRepository;
 import com.moodmate.domain.emotion.Emotion;
+import com.moodmate.domain.feedback.entity.AiFeedback;
+import com.moodmate.domain.feedback.repository.AiFeedbackRepository;
 import com.moodmate.domain.user.entity.User;
 import com.moodmate.domain.emotion.EmotionRepository;
 import com.moodmate.domain.user.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +22,9 @@ import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -28,6 +33,8 @@ public class DiaryService {
     private final DiaryRepository diaryRepository;
     private final EmotionRepository emotionRepository;
     private final UserRepository userRepository;
+
+    private final AiFeedbackRepository aiFeedbackRepository;
 
     private final EncryptionService encryptionService;
 
@@ -85,10 +92,50 @@ public class DiaryService {
         }
     }
 
+    public List<DiarySummaryOnlyResponse> getDiariesByPeriodSummary(Long userId, LocalDate startDate, LocalDate endDate) {
+        List<Diary> diaries = diaryRepository.findByUserIdAndDateBetween(userId, startDate, endDate);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        try {
+            String dek = keyService.decryptDek(user.getEncryptedDek());
+
+            return diaries.stream()
+                    .map(diary -> {
+                        // 해당 일기의 가장 최근 피드백 조회
+                        Optional<AiFeedback> feedbackOpt = aiFeedbackRepository.findLatestByDiaryId(diary.getId());
+
+                        String summary = "";
+                        if (feedbackOpt.isPresent()) {
+                            try {
+                                summary = encryptionService.decrypt(feedbackOpt.get().getSummary(), dek);
+                            } catch (Exception e) {
+                                log.error("피드백 요약 복호화 실패 - 일기 ID: {}", diary.getId(), e);
+                            }
+                        }
+
+                        return new DiarySummaryOnlyResponse(
+                                diary.getDate(),
+                                diary.getId(),
+                                summary
+                        );
+                    })
+                    // summary가 비어있거나 null이면 제외
+                    .filter(res -> res.summary() != null && !res.summary().isBlank())
+                    .toList();
+
+        } catch (Exception e) {
+            throw new RuntimeException("dek 복호화 중 오류 발생");
+        }
+    }
+
+
     /**
-     * 기간별 일기 조회 - 요약 형식 (날짜, ID, 감정만)
+     * 기간별 일기 조회 - 감정만 (날짜, ID, 감정만, 내용 없음)
+     * summary와 동일하지만 의미상 분리
      */
-    public List<DiaryMonthSummaryResponse> getDiariesByPeriodSummary(Long userId, LocalDate startDate, LocalDate endDate) {
+    public List<DiaryMonthSummaryResponse> getDiariesByPeriodEmotion(Long userId, LocalDate startDate, LocalDate endDate) {
         List<Diary> diaries = diaryRepository.findByUserIdAndDateBetween(userId, startDate, endDate);
 
         return diaries.stream()
@@ -130,7 +177,7 @@ public class DiaryService {
     public List<DiaryMonthSummaryResponse> getDiarySummariesByMonth(Long userId, YearMonth yearMonth) {
         LocalDate start = yearMonth.atDay(1);
         LocalDate end = yearMonth.atEndOfMonth();
-        return getDiariesByPeriodSummary(userId, start, end);
+        return getDiariesByPeriodEmotion(userId, start, end);
     }
 
     @Transactional
