@@ -1,10 +1,13 @@
-package com.moodmate.domain.user.controller;
+package com.moodmate.controller;
 
 import com.moodmate.domain.user.UserRepository;
 import com.moodmate.domain.user.entity.Role;
 import com.moodmate.domain.user.entity.User;
+import com.moodmate.domain.user.ouath.CustomOauth2User;
+import com.moodmate.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,7 +18,15 @@ public class AdminController {
     private final UserRepository userRepository;
 
     @GetMapping("/check")
-    public ResponseEntity<Void> checkAdmin(@RequestParam Long userId) {
+    public ResponseEntity<Void> checkAdmin() {
+
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (!(principal instanceof CustomOauth2User customUser)) {
+            return ResponseEntity.status(401).build(); // 인증되지 않은 사용자
+        }
+
+        Long userId = customUser.getUser().getId(); // getUser() 이용
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 

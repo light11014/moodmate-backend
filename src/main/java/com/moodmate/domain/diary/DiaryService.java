@@ -115,14 +115,23 @@ public class DiaryService {
                             }
                         }
 
+                        // 감정 정보 추출
+                        List<EmotionDto> emotions = diary.getDiaryEmotions().stream()
+                                .map(de -> new EmotionDto(
+                                        de.getEmotion().getName(),
+                                        de.getIntensity()))
+                                .toList();
+
                         return new DiarySummaryOnlyResponse(
                                 diary.getDate(),
                                 diary.getId(),
-                                summary
+                                summary,
+                                emotions
                         );
                     })
-                    // summary가 비어있거나 null이면 제외
-                    .filter(res -> res.summary() != null && !res.summary().isBlank())
+                    // summary 또는 emotions가 있으면 포함 (둘 다 없으면 제외)
+                    .filter(res -> (res.summary() != null && !res.summary().isBlank())
+                            || (res.emotions() != null && !res.emotions().isEmpty()))
                     .toList();
 
         } catch (Exception e) {

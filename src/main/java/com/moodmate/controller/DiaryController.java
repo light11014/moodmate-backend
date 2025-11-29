@@ -73,7 +73,7 @@ public class DiaryController {
     public ResponseEntity<?> getDiariesByPeriod(
             @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            @RequestParam(value = "require", required = false, defaultValue = "summary") String require,
+            @RequestParam(value = "require", required = true, defaultValue = "summary") String require,
             @AuthenticationPrincipal CustomOauth2User userDetails) {
 
         // 날짜 검증
