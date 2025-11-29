@@ -4,6 +4,7 @@ import com.moodmate.domain.diary.DiaryService;
 import com.moodmate.domain.diary.dto.DiaryMonthSummaryResponse;
 import com.moodmate.domain.diary.dto.DiaryRequest;
 import com.moodmate.domain.diary.dto.DiaryResponse;
+import com.moodmate.domain.diary.dto.DiarySummaryOnlyResponse;
 import com.moodmate.domain.user.ouath.CustomOauth2User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -51,15 +52,17 @@ public class DiaryController {
 
     @GetMapping("/period")
     @Operation(summary = "기간별 일기 조회",
-            description = "지정된 기간의 일기를 조회합니다. require 파라미터로 요약만 볼지 전체 내용을 볼지 선택할 수 있습니다.",
+            description = "지정된 기간의 일기를 조회합니다. require 파라미터로 AI 피드백 요약/감정만/전체 내용을 선택할 수 있습니다.",
             security = @SecurityRequirement(name = "bearer-key"),
             parameters = {
                     @Parameter(name = "startDate", description = "조회 시작 날짜", required = true, example = "2025-07-01"),
                     @Parameter(name = "endDate", description = "조회 종료 날짜", required = true, example = "2025-07-05"),
-                    @Parameter(name = "require", description = "응답 형식 (summary: 요약, full: 전체)", required = false, example = "summary")
+                    @Parameter(name = "require", description = "응답 형식 (summary: AI 피드백 요약만, emotion: 감정만, full: 전체)", required = false, example = "summary")
             },
             responses = {
                     @ApiResponse(responseCode = "200", description = "기간별 일기 조회 성공 (require=summary인 경우)",
+                            content = @Content(array = @ArraySchema(schema = @Schema(implementation = DiarySummaryOnlyResponse.class)))),
+                    @ApiResponse(responseCode = "200", description = "기간별 일기 조회 성공 (require=emotion인 경우)",
                             content = @Content(array = @ArraySchema(schema = @Schema(implementation = DiaryMonthSummaryResponse.class)))),
                     @ApiResponse(responseCode = "200", description = "기간별 일기 조회 성공 (require=full인 경우)",
                             content = @Content(array = @ArraySchema(schema = @Schema(implementation = DiaryResponse.class)))),
@@ -70,7 +73,7 @@ public class DiaryController {
     public ResponseEntity<?> getDiariesByPeriod(
             @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            @RequestParam(value = "require", required = false, defaultValue = "summary") String require,
+            @RequestParam(value = "require", required = true, defaultValue = "summary") String require,
             @AuthenticationPrincipal CustomOauth2User userDetails) {
 
         // 날짜 검증
@@ -78,15 +81,21 @@ public class DiaryController {
             throw new IllegalArgumentException("시작 날짜는 종료 날짜보다 이전이어야 합니다.");
         }
 
+        // require 파라미터 검증
+        if (!require.equals("summary") && !require.equals("emotion") && !require.equals("full")) {
+            throw new IllegalArgumentException("require는 'summary', 'emotion', 또는 'full'만 가능합니다.");
+        }
+
+        Long userId = userDetails.getUser().getId();
+
         if ("full".equals(require)) {
-            List<DiaryResponse> fullDiaries = diaryService.getDiariesByPeriodFull(
-                    userDetails.getUser().getId(), startDate, endDate
-            );
+            List<DiaryResponse> fullDiaries = diaryService.getDiariesByPeriodFull(userId, startDate, endDate);
             return ResponseEntity.ok(fullDiaries);
+        } else if ("emotion".equals(require)) {
+            List<DiaryMonthSummaryResponse> emotions = diaryService.getDiariesByPeriodEmotion(userId, startDate, endDate);
+            return ResponseEntity.ok(emotions);
         } else {
-            List<DiaryMonthSummaryResponse> summaries = diaryService.getDiariesByPeriodSummary(
-                    userDetails.getUser().getId(), startDate, endDate
-            );
+            List<DiarySummaryOnlyResponse> summaries = diaryService.getDiariesByPeriodSummary(userId, startDate, endDate);
             return ResponseEntity.ok(summaries);
         }
     }
