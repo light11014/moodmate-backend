@@ -105,16 +105,15 @@ public class PeriodAnalysisController {
     }
 
     @Operation(summary = "특정 기간의 종합 피드백 조회",
-            description = "특정 기간에 대한 종합 피드백이 있는지 조회합니다.",
+            description = "특정 기간에 대한 종합 피드백이 있는지 조회합니다. 피드백이 없는 경우 빈 문자열이 포함된 빈 객체를 반환합니다.",
             security = @SecurityRequirement(name = "bearer-key"),
             parameters = {
                     @Parameter(name = "startDate", description = "시작 날짜", required = true, example = "2025-04-01"),
                     @Parameter(name = "endDate", description = "종료 날짜", required = true, example = "2025-04-30")
             },
             responses = {
-                    @ApiResponse(responseCode = "200", description = "조회 성공",
+                    @ApiResponse(responseCode = "200", description = "조회 성공 (데이터가 있거나 없음)",
                             content = @Content(schema = @Schema(implementation = PeriodAnalysisDetailResponse.class))),
-                    @ApiResponse(responseCode = "404", description = "해당 기간의 종합 피드백이 없음", content = @Content),
                     @ApiResponse(responseCode = "401", description = "로그인하지 않은 사용자", content = @Content)
             })
     @GetMapping("/by-period")
@@ -130,8 +129,8 @@ public class PeriodAnalysisController {
         Optional<PeriodAnalysisDetailResponse> response =
                 periodAnalysisService.getPeriodAnalysisByPeriod(userId, startDate, endDate);
 
-        return response.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        // 피드백이 없는 경우 빈 객체 반환
+        return ResponseEntity.ok(response.orElse(createEmptyResponse()));
     }
 
     @Operation(summary = "종합 피드백 삭제",
@@ -156,5 +155,17 @@ public class PeriodAnalysisController {
 
         periodAnalysisService.deletePeriodAnalysis(userId, analysisId);
         return ResponseEntity.noContent().build();
+    }
+
+    private PeriodAnalysisDetailResponse createEmptyResponse() {
+        return PeriodAnalysisDetailResponse.builder()
+                .analysisId(null)
+                .startDate(null)
+                .endDate(null)
+                .analyzedDiaryCount(0)
+                .periodSummary("")
+                .recommendations("")
+                .createdAt(null)
+                .build();
     }
 }
