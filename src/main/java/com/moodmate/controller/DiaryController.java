@@ -161,34 +161,20 @@ public class DiaryController {
 
 
     @GetMapping("/count")
-    @Operation(summary = "기간별 일기 개수 조회",
-            description = "지정된 기간 내에 작성된 일기의 개수를 조회합니다.",
+    @Operation(summary = "전체 일기 개수 조회",
+            description = "사용자가 작성한 전체 일기의 개수를 조회합니다.",
             security = @SecurityRequirement(name = "bearer-key"),
-            parameters = {
-                    @Parameter(name = "startDate", description = "조회 시작 날짜", required = true, example = "2025-07-01"),
-                    @Parameter(name = "endDate", description = "조회 종료 날짜", required = true, example = "2025-07-31")
-            },
             responses = {
                     @ApiResponse(responseCode = "200", description = "일기 개수 조회 성공",
                             content = @Content(schema = @Schema(implementation = Integer.class),
                                     examples = @ExampleObject(value = "15"))),
-                    @ApiResponse(responseCode = "400", description = "잘못된 요청 (시작 날짜가 종료 날짜보다 늦음)", content = @Content),
                     @ApiResponse(responseCode = "401", description = "로그인하지 않은 사용자", content = @Content)
             }
     )
-    public ResponseEntity<Integer> getDiaryCountByPeriod(
-            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+    public ResponseEntity<Integer> getTotalDiaryCount(
             @AuthenticationPrincipal CustomOauth2User userDetails) {
 
-        // 날짜 검증
-        if (startDate.isAfter(endDate)) {
-            throw new IllegalArgumentException("시작 날짜는 종료 날짜보다 이전이어야 합니다.");
-        }
-
-        Integer count = diaryService.getDiaryCountByPeriod(
-                userDetails.getUser().getId(), startDate, endDate
-        );
+        Integer count = diaryService.getTotalDiaryCount(userDetails.getUser().getId());
 
         return ResponseEntity.ok(count);
     }
