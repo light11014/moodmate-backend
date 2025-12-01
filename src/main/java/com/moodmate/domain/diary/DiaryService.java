@@ -241,4 +241,8 @@ public class DiaryService {
         return diaryRepository.countByUserIdAndDateBetween(userId, startDate, endDate);
     }
 
+    public Integer getTotalDiaryCount(Long userId) {
+        return diaryRepository.countByUserId(userId);
+    }
+
 }
