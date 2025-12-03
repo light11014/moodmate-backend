@@ -34,7 +34,8 @@ public class GeminiService {
     public String generateSummary(String diaryContent) {
         String prompt = """
                 일기의 주요 키워드 3가지를 뽑아서, 각 키워드들을 #키워드1 #키워드2 #키워드3 의 형태로 출력해주세요.
-                만약, 3가지를 뽑을 수 없을 정도로 일기가 짧다면 2개만 뽑아서 나타내주세요.
+                만약 키워드를 추출할 수 없을 정도로 일기가 너무 짧다면, 아무 내용도 출력하지 마세요.
+                설명이나 문장은 출력하지 말고 결과만 출력하세요.
                             
                 일기 내용:
                 %s
@@ -158,34 +159,41 @@ public class GeminiService {
         try {
             List<?> candidates = (List<?>) response.get("candidates");
             if (candidates == null || candidates.isEmpty()) {
-                throw new RuntimeException("Gemini API 응답에 candidates가 없습니다");
+                log.warn("Gemini 응답 candidates 없음 - 빈 문자열 반환");
+                return "";
             }
 
             Map<?, ?> candidate = (Map<?, ?>) candidates.get(0);
+
             Map<?, ?> content = (Map<?, ?>) candidate.get("content");
             if (content == null) {
-                throw new RuntimeException("Gemini API 응답에 content가 없습니다");
+                log.warn("Gemini 응답 content 없음 - 빈 문자열 반환");
+                return "";
             }
 
             List<?> parts = (List<?>) content.get("parts");
             if (parts == null || parts.isEmpty()) {
-                throw new RuntimeException("Gemini API 응답에 parts가 없습니다");
+                log.warn("Gemini 응답 parts 없음 - 빈 문자열 반환");
+                return "";
             }
 
             Map<?, ?> part = (Map<?, ?>) parts.get(0);
             String text = (String) part.get("text");
 
-            if (text == null || text.trim().isEmpty()) {
-                throw new RuntimeException("Gemini API 응답 텍스트가 비어있습니다");
+            if (text == null) {
+                log.warn("Gemini 응답 text null - 빈 문자열 반환");
+                return "";
             }
 
             return text.trim();
 
         } catch (Exception e) {
             log.error("Gemini 응답 파싱 실패 - 작업: {}, 오류: {}", operation, e.getMessage(), e);
-            throw new RuntimeException("Gemini API 응답 파싱 실패: " + e.getMessage(), e);
+            return "";  // 마지막 fallback
         }
     }
+
+
 
     private Map<String, Object> createRequestBody(String prompt) {
         return Map.of(
