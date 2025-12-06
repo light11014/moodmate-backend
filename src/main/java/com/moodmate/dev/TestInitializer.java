@@ -1,9 +1,9 @@
 package com.moodmate.dev;
 
 import com.moodmate.config.encryption.EncryptionKeyService;
-import com.moodmate.domain.emotion.Emotion;
-import com.moodmate.domain.emotion.EmotionRepository;
-import com.moodmate.domain.user.UserRepository;
+import com.moodmate.domain.emotion.entity.Emotion;
+import com.moodmate.domain.emotion.repository.EmotionRepository;
+import com.moodmate.domain.user.repository.UserRepository;
 import com.moodmate.domain.user.entity.Role;
 import com.moodmate.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;

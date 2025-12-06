@@ -2,8 +2,9 @@ package com.moodmate.domain.tracking;
 
 import com.moodmate.domain.diary.repository.DiaryEmotionRepository;
 import com.moodmate.domain.diary.repository.DiaryRepository;
-import com.moodmate.domain.emotion.EmotionRepository;
-import com.moodmate.domain.tracking.dayOfWeek.DayOfWeekEmotionResponse;
+import com.moodmate.domain.emotion.repository.EmotionRepository;
+import com.moodmate.domain.tracking.dto.dayOfWeek.DayOfWeekEmotionResponse;
+import com.moodmate.domain.tracking.service.TrackingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

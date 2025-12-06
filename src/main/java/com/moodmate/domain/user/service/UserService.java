@@ -1,10 +1,10 @@
 package com.moodmate.domain.user.service;
 
 import com.moodmate.config.encryption.EncryptionKeyService;
-import com.moodmate.domain.user.UserRepository;
+import com.moodmate.domain.user.repository.UserRepository;
 import com.moodmate.domain.user.entity.Role;
 import com.moodmate.domain.user.entity.User;
-import com.moodmate.domain.user.ouath.OAuth2UserInfo;
+import com.moodmate.config.security.ouath.OAuth2UserInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

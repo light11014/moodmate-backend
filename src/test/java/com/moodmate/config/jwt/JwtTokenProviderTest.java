@@ -1,12 +1,12 @@
 package com.moodmate.config.jwt;
 
 import com.moodmate.api.TestUtils;
-import com.moodmate.domain.user.UserRepository;
+import com.moodmate.config.security.jwt.JwtProperties;
+import com.moodmate.config.security.jwt.JwtTokenProvider;
+import com.moodmate.domain.user.repository.UserRepository;
 import com.moodmate.domain.user.entity.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

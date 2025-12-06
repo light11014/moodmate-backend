@@ -1,7 +1,7 @@
 package com.moodmate.dev;
 
-import com.moodmate.config.jwt.JwtTokenProvider;
-import com.moodmate.domain.user.UserRepository;
+import com.moodmate.config.security.jwt.JwtTokenProvider;
+import com.moodmate.domain.user.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;

@@ -1,15 +1,14 @@
 package com.moodmate.api;
 
-import com.moodmate.config.jwt.JwtTokenProvider;
+import com.moodmate.config.security.jwt.JwtTokenProvider;
 import com.moodmate.domain.diary.entity.Diary;
 import com.moodmate.domain.diary.entity.DiaryEmotion;
 import com.moodmate.domain.diary.repository.DiaryEmotionRepository;
 import com.moodmate.domain.diary.repository.DiaryRepository;
-import com.moodmate.domain.emotion.Emotion;
-import com.moodmate.domain.emotion.EmotionRepository;
-import com.moodmate.domain.user.UserRepository;
+import com.moodmate.domain.emotion.entity.Emotion;
+import com.moodmate.domain.emotion.repository.EmotionRepository;
+import com.moodmate.domain.user.repository.UserRepository;
 import com.moodmate.domain.user.entity.User;
-import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

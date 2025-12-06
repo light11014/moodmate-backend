@@ -1,6 +1,6 @@
 package com.moodmate.domain.emotion.dto;
 
-import com.moodmate.domain.emotion.Emotion;
+import com.moodmate.domain.emotion.entity.Emotion;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 public record EmotionResponse (

@@ -1,8 +1,8 @@
 package com.moodmate.domain.diary.repository;
 
 import com.moodmate.domain.diary.entity.DiaryEmotion;
-import com.moodmate.domain.tracking.dayOfWeek.DayOfWeekEmotionProjection;
-import com.moodmate.domain.tracking.frequency.FrequencyDto;
+import com.moodmate.domain.tracking.dto.dayOfWeek.DayOfWeekEmotionProjection;
+import com.moodmate.domain.tracking.dto.frequency.FrequencyDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

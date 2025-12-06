@@ -1,35 +1,20 @@
 package com.moodmate.api;
 
-import com.moodmate.config.jwt.JwtProperties;
-import com.moodmate.config.jwt.JwtTokenProvider;
-import com.moodmate.domain.diary.entity.Diary;
-import com.moodmate.domain.diary.entity.DiaryEmotion;
-import com.moodmate.domain.diary.repository.DiaryEmotionRepository;
-import com.moodmate.domain.diary.repository.DiaryRepository;
-import com.moodmate.domain.emotion.Emotion;
-import com.moodmate.domain.emotion.EmotionRepository;
-import com.moodmate.domain.token.RefreshToken;
-import com.moodmate.domain.token.RefreshTokenRepository;
-import com.moodmate.domain.token.TokenType;
-import com.moodmate.domain.user.UserRepository;
+import com.moodmate.config.security.jwt.JwtProperties;
+import com.moodmate.config.security.jwt.JwtTokenProvider;
+import com.moodmate.domain.auth.entity.RefreshToken;
+import com.moodmate.domain.auth.repository.RefreshTokenRepository;
+import com.moodmate.domain.auth.entity.TokenType;
+import com.moodmate.domain.user.repository.UserRepository;
 import com.moodmate.domain.user.entity.User;
-import com.moodmate.domain.user.ouath.CustomOauth2User;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
+import com.moodmate.config.security.ouath.CustomOauth2User;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
-
-import javax.crypto.SecretKey;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -38,13 +23,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
 
 @SpringBootTest
 @AutoConfigureMockMvc
