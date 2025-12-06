@@ -11,7 +11,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface DiaryEmotionRepository extends JpaRepository<DiaryEmotion, Long> {
-    @Query("SELECT new com.moodmate.domain.tracking.frequency.FrequencyDto(de.emotion.name, COUNT(de)) " +
+    @Query("SELECT new com.moodmate.domain.tracking.dto.frequency.FrequencyDto(de.emotion.name, COUNT(de)) " +
             "FROM DiaryEmotion de " +
             "WHERE de.diary.user.id = :userId " +
             "AND de.diary.date BETWEEN :startDate AND :endDate " +
