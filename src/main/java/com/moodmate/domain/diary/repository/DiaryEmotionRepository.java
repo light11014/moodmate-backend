@@ -1,8 +1,8 @@
 package com.moodmate.domain.diary.repository;
 
 import com.moodmate.domain.diary.entity.DiaryEmotion;
-import com.moodmate.domain.tracking.dayOfWeek.DayOfWeekEmotionProjection;
-import com.moodmate.domain.tracking.frequency.FrequencyDto;
+import com.moodmate.domain.tracking.dto.dayOfWeek.DayOfWeekEmotionProjection;
+import com.moodmate.domain.tracking.dto.frequency.FrequencyDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,7 +11,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface DiaryEmotionRepository extends JpaRepository<DiaryEmotion, Long> {
-    @Query("SELECT new com.moodmate.domain.tracking.frequency.FrequencyDto(de.emotion.name, COUNT(de)) " +
+    @Query("SELECT new com.moodmate.domain.tracking.dto.frequency.FrequencyDto(de.emotion.name, COUNT(de)) " +
             "FROM DiaryEmotion de " +
             "WHERE de.diary.user.id = :userId " +
             "AND de.diary.date BETWEEN :startDate AND :endDate " +

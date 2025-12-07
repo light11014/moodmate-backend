@@ -1,6 +1,6 @@
 package com.moodmate.domain.diary.entity;
 
-import com.moodmate.domain.emotion.Emotion;
+import com.moodmate.domain.emotion.entity.Emotion;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

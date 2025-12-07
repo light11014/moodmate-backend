@@ -2,7 +2,10 @@ package com.moodmate.domain.feedback.dto;
 
 import com.moodmate.config.encryption.EncryptionService;
 import com.moodmate.domain.feedback.entity.AiFeedback;
-import com.moodmate.domain.feedback.entity.PeriodAnalysis;
+import com.moodmate.domain.period.entity.PeriodAnalysis;
+import com.moodmate.domain.period.dto.PeriodAnalysisDetailResponse;
+import com.moodmate.domain.period.dto.PeriodAnalysisListItem;
+import com.moodmate.domain.period.dto.PeriodAnalysisListResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

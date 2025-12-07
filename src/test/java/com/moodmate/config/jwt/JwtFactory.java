@@ -1,6 +1,6 @@
 package com.moodmate.config.jwt;
 
-import io.jsonwebtoken.JwtBuilder;
+import com.moodmate.config.security.jwt.JwtProperties;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -13,7 +13,6 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
-import java.util.Objects;
 
 @Getter
 public class JwtFactory {

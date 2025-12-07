@@ -1,13 +1,11 @@
 package com.moodmate.api;
 
-import com.moodmate.config.jwt.JwtTokenProvider;
-import com.moodmate.domain.emotion.Emotion;
-import com.moodmate.domain.emotion.EmotionRepository;
-import com.moodmate.domain.user.UserRepository;
+import com.moodmate.config.security.jwt.JwtTokenProvider;
+import com.moodmate.domain.emotion.entity.Emotion;
+import com.moodmate.domain.emotion.repository.EmotionRepository;
+import com.moodmate.domain.user.repository.UserRepository;
 import com.moodmate.domain.user.entity.User;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;

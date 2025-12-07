@@ -1,15 +1,9 @@
 package com.moodmate.domain.user.entity;
 
-import com.moodmate.domain.diary.entity.Diary;
-import com.moodmate.domain.token.RefreshToken;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Getter

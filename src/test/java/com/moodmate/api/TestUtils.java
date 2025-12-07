@@ -1,10 +1,10 @@
 package com.moodmate.api;
 
 import com.moodmate.config.encryption.EncryptionKeyService;
-import com.moodmate.config.jwt.JwtTokenProvider;
-import com.moodmate.domain.token.RefreshToken;
-import com.moodmate.domain.token.RefreshTokenRepository;
-import com.moodmate.domain.user.UserRepository;
+import com.moodmate.config.security.jwt.JwtTokenProvider;
+import com.moodmate.domain.auth.entity.RefreshToken;
+import com.moodmate.domain.auth.repository.RefreshTokenRepository;
+import com.moodmate.domain.user.repository.UserRepository;
 import com.moodmate.domain.user.entity.Role;
 import com.moodmate.domain.user.entity.User;
 import org.springframework.stereotype.Component;

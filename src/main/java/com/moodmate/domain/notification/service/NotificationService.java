@@ -5,7 +5,7 @@ import com.moodmate.domain.notification.dto.NotificationRequest;
 import com.moodmate.domain.notification.dto.NotificationResponse;
 import com.moodmate.domain.notification.entity.Notification;
 import com.moodmate.domain.notification.repository.NotificationRepository;
-import com.moodmate.domain.user.UserRepository;
+import com.moodmate.domain.user.repository.UserRepository;
 import com.moodmate.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

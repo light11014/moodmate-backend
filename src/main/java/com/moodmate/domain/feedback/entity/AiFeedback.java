@@ -29,7 +29,11 @@ public class AiFeedback extends BaseTimeEntity {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "diary_id", nullable = false)
+    @JoinColumn(name = "diary_id", nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "fk_ai_feedback_diary",
+                    foreignKeyDefinition = "FOREIGN KEY (diary_id) REFERENCES diary(id) ON DELETE CASCADE"
+            ))
     private Diary diary;
 
     @Column(nullable = false, columnDefinition = "TEXT")
