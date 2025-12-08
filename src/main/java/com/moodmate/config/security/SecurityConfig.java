@@ -35,7 +35,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS) //
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
                 .authorizeHttpRequests(auth -> auth
@@ -49,7 +49,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers("/api/auth/login/admin").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/users/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
-                        .requestMatchers("/api/auth/logout").authenticated()
+                        .requestMatchers("/api/auth/logout").permitAll()
                         .anyRequest().authenticated()
                 )
 
@@ -63,10 +63,10 @@ public class SecurityConfig {
                 )
 
                 // 로그아웃 설정
-                .logout(logout -> logout
-                        .logoutUrl("/api/auth/logout")
-                        .logoutSuccessHandler(customLogoutSuccessHandler)
-                )
+//                .logout(logout -> logout
+//                        .logoutUrl("/api/auth/logout")
+//                        .logoutSuccessHandler(customLogoutSuccessHandler)
+//                )
 
                 // CSRF, FormLogin 비활성화 (REST API 서버이므로)
                 .csrf(AbstractHttpConfigurer::disable)

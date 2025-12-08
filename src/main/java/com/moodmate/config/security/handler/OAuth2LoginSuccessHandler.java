@@ -7,8 +7,10 @@ import com.moodmate.config.security.ouath.CustomOauth2User;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
@@ -33,7 +35,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         // JWT 생성
         String token = jwtTokenProvider.createRefreshToken(user.getId());
         refreshTokenService.saveRefreshToken(user, token);
-
 
         // 쿠키 생성
         Cookie cookie = new Cookie("mm-rt", token);
