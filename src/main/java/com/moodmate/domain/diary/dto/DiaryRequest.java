@@ -20,4 +20,10 @@ public class DiaryRequest {
 
     @NotEmpty
     private List<EmotionDto> emotions;
+
+    public DiaryRequest(String content, LocalDate date, List<EmotionDto> emotions) {
+        this.content = content;
+        this.date = date;
+        this.emotions = emotions;
+    }
 }
