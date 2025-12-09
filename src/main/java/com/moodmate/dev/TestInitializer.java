@@ -24,22 +24,8 @@ public class TestInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        // --- test User 생성 ---
-        User user = User.createOAuthUser(
-                "moodmate001",
-                "moodmate",
-                "001",
-                Role.USER,
-                "test@example.com",
-                "test",
-                keyService.createAndEncryptDek()
-        );
-
-        userRepository.findByEmail("test@example.com")
-                .orElseGet(() -> userRepository.save(user));
-
         // --- Emotion 초기화 ---
-        List<String> defaultEmotions = List.of("기쁨", "슬픔", "분노", "우울", "뿌듯", "놀람");
+        List<String> defaultEmotions = List.of("열정", "신남", "설렘", "편안", "기쁨", "뿌듯", "화남", "답답", "불안", "슬픔", "부끄", "놀람");
 
         for (String name : defaultEmotions) {
             emotionRepository.findByName(name)
