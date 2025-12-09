@@ -32,10 +32,38 @@ public class TokenController {
         try {
             String newAccessToken = tokenService.createNewAccessToken(refreshToken);
             return ResponseEntity.ok(new AccessTokenResponse(newAccessToken));
+
         } catch (ExpiredJwtException e) {
             refreshTokenService.deleteByRefreshToken(refreshToken);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "RefreshToken expired. Please login again."));
+
+        } catch (IllegalArgumentException e) {
+            // 검증 실패, 타입 불일치
+            if (e.getMessage().contains("Wrong token type")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "Invalid token type"));
+            }
+
+            // DB에서 못 찾음 (로그아웃됨)
+            if (e.getMessage().contains("RefreshToken not found")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Token not found. Please login again."));
+            }
+
+            // 기타
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Invalid refresh token"));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Token refresh failed"));
         }
+
+
     }
+
+
+
+
 }
